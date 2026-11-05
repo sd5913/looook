@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Looook — MediaPipe Gaze Test</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #111;
+      color: white;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ---------------- START SCREEN ---------------- */
+
+    #start-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      background: #111;
+    }
+
+    .start-panel {
+      width: min(600px, 88vw);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 18px;
+      font-size: 56px;
+    }
+
+    .intro {
+      color: #aaa;
+      line-height: 1.7;
+      font-size: 17px;
+    }
+
+    #start-button {
+      margin-top: 28px;
+
+      border: 0;
+      border-radius: 999px;
+
+      padding: 17px 34px;
+
+      font-size: 18px;
+
+      background: white;
+      color: #111;
+
+      cursor: pointer;
+    }
+
+    #start-button:disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
+
+    #error-message {
+      display: none;
+
+      margin-top: 20px;
+
+      color: #ff7777;
+      line-height: 1.5;
+    }
+
+    /* ---------------- CAMERA ---------------- */
+
+    #camera-panel {
+      position: fixed;
+
+      top: 20px;
+      left: 20px;
+
+      width: 320px;
+
+      border-radius: 16px;
+      overflow: hidden;
+
+      background: #222;
+
+      display: none;
+
+      z-index: 300;
+    }
+
+    #video-wrapper {
+      position: relative;
+      width: 320px;
+      aspect-ratio: 4 / 3;
+      overflow: hidden;
+      background: black;
+    }
+
+    #webcam {
+      width: 100%;
+      height: 100%;
+
+      object-fit: cover;
+
+      transform: scaleX(-1);
+    }
+
+    #overlay {
+      position: absolute;
+      inset: 0;
+
+      width: 100%;
+      height: 100%;
+
+      pointer-events: none;
+
+      transform: scaleX(-1);
+    }
+
+    #camera-status {
+      padding: 10px 14px;
+
+      font-size: 13px;
+      line-height: 1.5;
+
+      color: #bbb;
+    }
+
+    /* ---------------- TARGET ---------------- */
+
+    #target-container {
+      position: relative;
+
+      width: 180px;
+      height: 180px;
+
+      display: none;
+
+      align-items: center;
+      justify-content: center;
+    }
+
+    #target-svg {
+      position: absolute;
+
+      width: 180px;
+      height: 180px;
+
+      transform: rotate(-90deg);
+    }
+
+    #ring-background {
+      fill: none;
+
+      stroke: rgba(255, 255, 255, 0.15);
+      stroke-width: 9;
+    }
+
+    #ring-progress {
+      fill: none;
+
+      stroke: white;
+      stroke-width: 9;
+      stroke-linecap: round;
+
+      stroke-dasharray: 477.52;
+      stroke-dashoffset: 477.52;
+
+      transition: stroke 0.15s ease;
+    }
+
+    #target-dot {
+      width: 72px;
+      height: 72px;
+
+      border-radius: 50%;
+
+      background: #ff4d4d;
+
+      transition:
+        background 0.15s ease,
+        transform 0.15s ease;
+    }
+
+    #target-dot.detected {
+      background: #00e891;
+      transform: scale(1.08);
+    }
+
+    /* ---------------- MESSAGE ---------------- */
+
+    #instruction {
+      position: fixed;
+
+      top: 30px;
+      left: 50%;
+
+      transform: translateX(-50%);
+
+      text-align: center;
+
+      display: none;
+    }
+
+    #instruction strong {
+      display: block;
+
+      margin-bottom: 6px;
+
+      font-size: 22px;
+    }
+
+    #instruction span {
+      color: #999;
+      font-size: 14px;
+    }
+
+    /* ---------------- DEBUG ---------------- */
+
+    #debug-panel {
+      position: fixed;
+
+      right: 20px;
+      bottom: 20px;
+
+      width: 300px;
+
+      padding: 14px 16px;
+
+      border-radius: 12px;
+
+      background: rgba(0, 0, 0, 0.72);
+
+      font-family: monospace;
+      font-size: 13px;
+      line-height: 1.65;
+
+      color: #aaa;
+
+      display: none;
+    }
+
+    .good {
+      color: #00e891;
+    }
+
+    .bad {
+      color: #ff7070;
+    }
+
+    #complete-message {
+      position: fixed;
+
+      bottom: 35px;
+      left: 50%;
+
+      transform: translateX(-50%);
+
+      font-size: 18px;
+      font-weight: bold;
+
+      color: #00e891;
+
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    #complete-message.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+
+
+<body>
+
+  <!-- START SCREEN -->
+
+  <div id="start-screen">
+
+    <div class="start-panel">
+
+      <h1>Looook</h1>
+
+      <p class="intro">
+        This test uses MediaPipe iris landmarks.
+        <br>
+        Keep your head facing the camera.
+        <br>
+        Look directly at the red target using only your eyes.
+        <br>
+        The ring should grow only while your gaze is on the target.
+      </p>
+
+      <button id="start-button">
+        START GAZE TEST
+      </button>
+
+      <div id="error-message"></div>
+
+    </div>
+
+  </div>
+
+
+  <!-- CAMERA -->
+
+  <div id="camera-panel">
+
+    <div id="video-wrapper">
+
+      <video
+        id="webcam"
+        autoplay
+        muted
+        playsinline>
+      </video>
+
+      <canvas id="overlay"></canvas>
+
+    </div>
+
+    <div id="camera-status">
+      Loading MediaPipe...
+    </div>
+
+  </div>
+
+
+  <!-- INSTRUCTION -->
+
+  <div id="instruction">
+
+    <strong>
+      Look at the red target
+    </strong>
+
+    <span>
+      Move only your eyes. Look away to pause the ring.
+    </span>
+
+  </div>
+
+
+  <!-- TARGET -->
+
+  <div id="target-container">
+
+    <svg
+      id="target-svg"
+      viewBox="0 0 180 180"
+    >
+
+      <circle
+        id="ring-background"
+        cx="90"
+        cy="90"
+        r="76">
+      </circle>
+
+      <circle
+        id="ring-progress"
+        cx="90"
+        cy="90"
+        r="76">
+      </circle>
+
+    </svg>
+
+    <div id="target-dot"></div>
+
+  </div>
+
+
+  <!-- DEBUG -->
+
+  <div id="debug-panel">
+
+    <div id="face-state">
+      Face: waiting
+    </div>
+
+    <div id="head-state">
+      Head: waiting
+    </div>
+
+    <div>
+      Left iris H:
+      <span id="left-h">--</span>
+    </div>
+
+    <div>
+      Right iris H:
+      <span id="right-h">--</span>
+    </div>
+
+    <div>
+      Vertical:
+      <span id="vertical">--</span>
+    </div>
+
+    <div>
+      Progress:
+      <span id="progress-value">0%</span>
+    </div>
+
+    <div id="gaze-state">
+      Gaze: waiting
+    </div>
+
+  </div>
+
+
+  <div id="complete-message">
+    GAZE TARGET COMPLETED ✓
+  </div>
+
+
+  <script type="module">
+
+    import {
+      FaceLandmarker,
+      FilesetResolver
+    } from
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.2/+esm";
+
+
+    /* ==================================================
+       SETTINGS
+    ================================================== */
+
+    /*
+      How long gaze must stay on the target.
+    */
+
+    const DWELL_MS = 2000;
+
+
+    /*
+      These are intentionally fairly broad
+      for the first technical test.
+
+      0.5 = iris approximately centered
+      between the two eye corners.
+    */
+
+    const H_MIN = 0.39;
+    const H_MAX = 0.61;
+
+    const V_MIN = 0.31;
+    const V_MAX = 0.69;
+
+
+    /*
+      Face / head position check.
+
+      Nose should remain roughly between
+      both sides of the face.
+    */
+
+    const HEAD_MIN = 0.34;
+    const HEAD_MAX = 0.66;
+
+
+    /*
+      Minimum eye opening.
+
+      Prevents blinks / closed eyes
+      from counting as valid gaze.
+    */
+
+    const MIN_EYE_OPENNESS = 0.10;
+
+
+    /*
+      Circular progress.
+      r = 76
+      circumference = 2πr
+    */
+
+    const RING_LENGTH = 477.52;
+
+
+    /* ==================================================
+       ELEMENTS
+    ================================================== */
+
+    const startScreen =
+      document.getElementById("start-screen");
+
+    const startButton =
+      document.getElementById("start-button");
+
+    const errorMessage =
+      document.getElementById("error-message");
+
+    const cameraPanel =
+      document.getElementById("camera-panel");
+
+    const cameraStatus =
+      document.getElementById("camera-status");
+
+    const video =
+      document.getElementById("webcam");
+
+    const canvas =
+      document.getElementById("overlay");
+
+    const ctx =
+      canvas.getContext("2d");
+
+    const instruction =
+      document.getElementById("instruction");
+
+    const targetContainer =
+      document.getElementById("target-container");
+
+    const targetDot =
+      document.getElementById("target-dot");
+
+    const ringProgress =
+      document.getElementById("ring-progress");
+
+    const debugPanel =
+      document.getElementById("debug-panel");
+
+    const faceState =
+      document.getElementById("face-state");
+
+    const headState =
+      document.getElementById("head-state");
+
+    const gazeState =
+      document.getElementById("gaze-state");
+
+    const leftHText =
+      document.getElementById("left-h");
+
+    const rightHText =
+      document.getElementById("right-h");
+
+    const verticalText =
+      document.getElementById("vertical");
+
+    const progressValue =
+      document.getElementById("progress-value");
+
+    const completeMessage =
+      document.getElementById("complete-message");
+
+
+    /* ==================================================
+       STATE
+    ================================================== */
+
+    let faceLandmarker = null;
+
+    let lastVideoTime = -1;
+
+    let lastFrameTime =
+      performance.now();
+
+    let gazeProgress = 0;
+
+    let completed = false;
+
+
+    /* ==================================================
+       START
+    ================================================== */
+
+    startButton.addEventListener(
+      "click",
+      startTest
+    );
+
+
+    async function startTest() {
+
+      startButton.disabled = true;
+
+      startButton.textContent =
+        "LOADING...";
+
+      errorMessage.style.display =
+        "none";
+
+
+      try {
+
+        /* ---------- Load MediaPipe ---------- */
+
+        cameraStatus.textContent =
+          "Loading MediaPipe Face Landmarker...";
+
+
+        const vision =
+          await FilesetResolver.forVisionTasks(
+            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.2/wasm"
+          );
+
+
+        faceLandmarker =
+          await FaceLandmarker.createFromOptions(
+            vision,
+            {
+
+              baseOptions: {
+
+                modelAssetPath:
+                  "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
+
+              },
+
+              runningMode: "VIDEO",
+
+              numFaces: 1,
+
+              minFaceDetectionConfidence: 0.5,
+
+              minFacePresenceConfidence: 0.5,
+
+              minTrackingConfidence: 0.5
+
+            }
+          );
+
+
+        /* ---------- Camera ---------- */
+
+        cameraStatus.textContent =
+          "Requesting camera access...";
+
+
+        const stream =
+          await navigator.mediaDevices
+            .getUserMedia({
+
+              video: {
+
+                width: {
+                  ideal: 640
+                },
+
+                height: {
+                  ideal: 480
+                },
+
+                facingMode: "user"
+
+              },
+
+              audio: false
+
+            });
+
+
+        video.srcObject =
+          stream;
+
+
+        await video.play();
+
+
+        await new Promise(
+          resolve => {
+
+            if (
+              video.readyState >= 2
+            ) {
+
+              resolve();
+
+            }
+
+            else {
+
+              video.onloadeddata =
+                resolve;
+
+            }
+
+          }
+        );
+
+
+        /* ---------- Canvas ---------- */
+
+        canvas.width =
+          video.videoWidth;
+
+        canvas.height =
+          video.videoHeight;
+
+
+        /* ---------- Show UI ---------- */
+
+        startScreen.style.display =
+          "none";
+
+        cameraPanel.style.display =
+          "block";
+
+        instruction.style.display =
+          "block";
+
+        targetContainer.style.display =
+          "flex";
+
+        debugPanel.style.display =
+          "block";
+
+
+        cameraStatus.textContent =
+          "Camera ready — detecting eyes";
+
+
+        lastFrameTime =
+          performance.now();
+
+
+        requestAnimationFrame(
+          renderLoop
+        );
+
+      }
+
+      catch (error) {
+
+        console.error(error);
+
+        startButton.disabled = false;
+
+        startButton.textContent =
+          "TRY AGAIN";
+
+        errorMessage.style.display =
+          "block";
+
+        errorMessage.textContent =
+          "Could not start MediaPipe or camera. Open DevTools Console.";
+
+      }
+
+    }
+
+
+    /* ==================================================
+       MAIN LOOP
+    ================================================== */
+
+    function renderLoop(now) {
+
+      if (
+        video.currentTime !==
+        lastVideoTime
+      ) {
+
+        lastVideoTime =
+          video.currentTime;
+
+
+        const result =
+          faceLandmarker
+            .detectForVideo(
+              video,
+              now
+            );
+
+
+        processFace(
+          result,
+          now
+        );
+
+      }
+
+
+      requestAnimationFrame(
+        renderLoop
+      );
+
+    }
+
+
+    /* ==================================================
+       PROCESS FACE
+    ================================================== */
+
+    function processFace(
+      result,
+      now
+    ) {
+
+      const dt =
+        Math.min(
+          now - lastFrameTime,
+          100
+        );
+
+      lastFrameTime =
+        now;
+
+
+      ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+
+      /*
+        No face.
+      */
+
+      if (
+        !result.faceLandmarks ||
+        result.faceLandmarks.length === 0
+      ) {
+
+        faceState.textContent =
+          "Face: NOT FOUND";
+
+        faceState.className =
+          "bad";
+
+
+        updateProgress(
+          false,
+          dt
+        );
+
+        return;
+
+      }
+
+
+      const lm =
+        result.faceLandmarks[0];
+
+
+      faceState.textContent =
+        "Face: detected";
+
+      faceState.className =
+        "good";
+
+
+      /*
+        Official MediaPipe iris centers:
+
+        468 = left iris center
+        473 = right iris center
+
+        Eye corners:
+        left eye  = 33, 133
+        right eye = 263, 362
+      */
+
+
+      const leftIris =
+        lm[468];
+
+      const rightIris =
+        lm[473];
+
+
+      /* ---------- Horizontal iris ratios ---------- */
+
+      const leftHorizontal =
+        normalizedBetween(
+          leftIris.x,
+          lm[33].x,
+          lm[133].x
+        );
+
+
+      const rightHorizontal =
+        normalizedBetween(
+          rightIris.x,
+          lm[263].x,
+          lm[362].x
+        );
+
+
+      /*
+        Vertical ratios.
+
+        Left:
+        159 = upper eyelid
+        145 = lower eyelid
+
+        Right:
+        386 = upper
+        374 = lower
+      */
+
+
+      const leftVertical =
+        normalizedBetween(
+          leftIris.y,
+          lm[159].y,
+          lm[145].y
+        );
+
+
+      const rightVertical =
+        normalizedBetween(
+          rightIris.y,
+          lm[386].y,
+          lm[374].y
+        );
+
+
+      const averageVertical =
+        (
+          leftVertical +
+          rightVertical
+        ) / 2;
+
+
+      /* ---------- Eye openness ---------- */
+
+      const leftEyeOpen =
+        eyeOpenness(
+          lm[159],
+          lm[145],
+          lm[33],
+          lm[133]
+        );
+
+
+      const rightEyeOpen =
+        eyeOpenness(
+          lm[386],
+          lm[374],
+          lm[263],
+          lm[362]
+        );
+
+
+      const eyesOpen =
+        leftEyeOpen >
+          MIN_EYE_OPENNESS
+        &&
+        rightEyeOpen >
+          MIN_EYE_OPENNESS;
+
+
+      /* ---------- Approximate head yaw ---------- */
+
+      const headRatio =
+        normalizedBetween(
+          lm[1].x,
+          lm[234].x,
+          lm[454].x
+        );
+
+
+      const headFrontal =
+        headRatio >= HEAD_MIN &&
+        headRatio <= HEAD_MAX;
+
+
+      /* ---------- Raw iris gaze check ---------- */
+
+      const horizontalCentered =
+        leftHorizontal >= H_MIN &&
+        leftHorizontal <= H_MAX &&
+        rightHorizontal >= H_MIN &&
+        rightHorizontal <= H_MAX;
+
+
+      const verticalCentered =
+        averageVertical >= V_MIN &&
+        averageVertical <= V_MAX;
+
+
+      const lookingAtCenter =
+        horizontalCentered &&
+        verticalCentered &&
+        headFrontal &&
+        eyesOpen;
+
+
+      /* ---------- Debug ---------- */
+
+      leftHText.textContent =
+        leftHorizontal.toFixed(3);
+
+      rightHText.textContent =
+        rightHorizontal.toFixed(3);
+
+      verticalText.textContent =
+        averageVertical.toFixed(3);
+
+
+      if (headFrontal) {
+
+        headState.textContent =
+          "Head: frontal";
+
+        headState.className =
+          "good";
+
+      }
+
+      else {
+
+        headState.textContent =
+          "Head: turn detected";
+
+        headState.className =
+          "bad";
+
+      }
+
+
+      if (lookingAtCenter) {
+
+        gazeState.textContent =
+          "Gaze: CENTER ✓";
+
+        gazeState.className =
+          "good";
+
+      }
+
+      else {
+
+        gazeState.textContent =
+          "Gaze: outside target";
+
+        gazeState.className =
+          "bad";
+
+      }
+
+
+      /* ---------- Real gaze-driven progress ---------- */
+
+      updateProgress(
+        lookingAtCenter,
+        dt
+      );
+
+
+      /* ---------- Draw iris centers ---------- */
+
+      drawPoint(
+        leftIris,
+        "#00ffff"
+      );
+
+      drawPoint(
+        rightIris,
+        "#00ffff"
+      );
+
+    }
+
+
+    /* ==================================================
+       PROGRESS
+    ================================================== */
+
+    function updateProgress(
+      gazeValid,
+      dt
+    ) {
+
+      if (completed) {
+        return;
+      }
+
+
+      if (gazeValid) {
+
+        /*
+          Only genuine gaze detection
+          increases the ring.
+        */
+
+        gazeProgress +=
+          dt / DWELL_MS;
+
+      }
+
+      else {
+
+        /*
+          Looking away makes progress
+          slowly fall back.
+        */
+
+        gazeProgress -=
+          dt / 900;
+
+      }
+
+
+      gazeProgress =
+        Math.max(
+          0,
+          Math.min(
+            gazeProgress,
+            1
+          )
+        );
+
+
+      const offset =
+        RING_LENGTH *
+        (
+          1 -
+          gazeProgress
+        );
+
+
+      ringProgress.style.strokeDashoffset =
+        offset;
+
+
+      progressValue.textContent =
+        Math.round(
+          gazeProgress * 100
+        ) + "%";
+
+
+      if (gazeValid) {
+
+        targetDot.classList.add(
+          "detected"
+        );
+
+        ringProgress.style.stroke =
+          "#00e891";
+
+      }
+
+      else {
+
+        targetDot.classList.remove(
+          "detected"
+        );
+
+        ringProgress.style.stroke =
+          "white";
+
+      }
+
+
+      if (
+        gazeProgress >= 1
+      ) {
+
+        completed =
+          true;
+
+        targetDot.classList.add(
+          "detected"
+        );
+
+        ringProgress.style.stroke =
+          "#00e891";
+
+        completeMessage.classList.add(
+          "show"
+        );
+
+        gazeState.textContent =
+          "Gaze: COMPLETED ✓";
+
+        gazeState.className =
+          "good";
+
+      }
+
+    }
+
+
+    /* ==================================================
+       HELPERS
+    ================================================== */
+
+    function normalizedBetween(
+      value,
+      a,
+      b
+    ) {
+
+      const min =
+        Math.min(a, b);
+
+      const max =
+        Math.max(a, b);
+
+      const range =
+        max - min;
+
+
+      if (
+        range < 0.00001
+      ) {
+
+        return 0.5;
+
+      }
+
+
+      return (
+        value - min
+      ) / range;
+
+    }
+
+
+    function eyeOpenness(
+      top,
+      bottom,
+      cornerA,
+      cornerB
+    ) {
+
+      const vertical =
+        Math.abs(
+          top.y -
+          bottom.y
+        );
+
+
+      const horizontal =
+        Math.abs(
+          cornerA.x -
+          cornerB.x
+        );
+
+
+      if (
+        horizontal <
+        0.00001
+      ) {
+
+        return 0;
+
+      }
+
+
+      return (
+        vertical /
+        horizontal
+      );
+
+    }
+
+
+    function drawPoint(
+      landmark,
+      color
+    ) {
+
+      const x =
+        landmark.x *
+        canvas.width;
+
+      const y =
+        landmark.y *
+        canvas.height;
+
+
+      ctx.beginPath();
+
+      ctx.arc(
+        x,
+        y,
+        5,
+        0,
+        Math.PI * 2
+      );
+
+      ctx.fillStyle =
+        color;
+
+      ctx.fill();
+
+    }
+
+  </script>
+
+</body>
+</html>
