@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+
+  <base href="https://cdn.jsdelivr.net/npm/webgazer@3.5.3/dist/">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Looook — Gaze Calibration</title>
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/webgazer@3.5.3/dist/webgazer.min.js">
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #111;
+      color: white;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    /* ---------- START ---------- */
+
+    #start-screen {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #111;
+      z-index: 1000;
+    }
+
+    .panel {
+      width: min(580px, 86vw);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 20px;
+      font-size: 56px;
+    }
+
+    .intro {
+      color: #aaa;
+      font-size: 17px;
+      line-height: 1.7;
+    }
+
+    #start-button {
+      margin-top: 28px;
+      padding: 17px 34px;
+      border: 0;
+      border-radius: 999px;
+      background: white;
+      color: #111;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    #start-button:disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
+
+    #error-message {
+      display: none;
+      margin-top: 20px;
+      color: #ff7373;
+      line-height: 1.5;
+    }
+
+    /* ---------- INSTRUCTION ---------- */
+
+    #instruction {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 13px 22px;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.75);
+      text-align: center;
+      display: none;
+      z-index: 700;
+    }
+
+    #instruction-main {
+      font-size: 16px;
+    }
+
+    #progress-text {
+      margin-top: 5px;
+      color: #aaa;
+      font-size: 13px;
+    }
+
+    /* ---------- CALIBRATION TARGET ---------- */
+
+    #calibration-target {
+      position: fixed;
+      width: 92px;
+      height: 92px;
+      transform: translate(-50%, -50%);
+      display: none;
+      z-index: 600;
+    }
+
+    #target-dot {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 42px;
+      height: 42px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: #ff4d4d;
+    }
+
+    #progress-ring {
+      position: absolute;
+      inset: 0;
+      width: 92px;
+      height: 92px;
+      transform: rotate(-90deg);
+    }
+
+    #ring-background {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.18);
+      stroke-width: 6;
+    }
+
+    #ring-progress {
+      fill: none;
+      stroke: white;
+      stroke-width: 6;
+      stroke-linecap: round;
+
+      /* radius 40 → circumference ≈ 251.327 */
+      stroke-dasharray: 251.327;
+      stroke-dashoffset: 251.327;
+    }
+
+    /* ---------- TEST ---------- */
+
+    #test-area {
+      position: fixed;
+      inset: 0;
+      display: none;
+      background: #111;
+    }
+
+    #test-title {
+      position: absolute;
+      top: 26px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+
+    #test-title strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 23px;
+    }
+
+    #test-title span {
+      color: #999;
+      font-size: 14px;
+    }
+
+    .zone {
+      position: absolute;
+      top: 20%;
+      bottom: 20%;
+      width: 27%;
+      border: 3px solid #444;
+      border-radius: 28px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      color: #666;
+      font-size: 34px;
+      font-weight: bold;
+
+      transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease,
+        transform 0.15s ease;
+    }
+
+    .zone.active {
+      border-color: white;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      transform: scale(1.025);
+    }
+
+    #left-zone {
+      left: 4%;
+    }
+
+    #center-zone {
+      left: 36.5%;
+    }
+
+    #right-zone {
+      right: 4%;
+    }
+
+    /* ---------- GAZE DOT ---------- */
+
+    #gaze-dot {
+      position: fixed;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #00ff9d;
+      border: 3px solid white;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      display: none;
+      z-index: 9999;
+    }
+
+    /* ---------- STATUS ---------- */
+
+    #status {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%);
+      padding: 9px 14px;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.65);
+      color: #aaa;
+      font-family: monospace;
+      font-size: 13px;
+      display: none;
+      z-index: 800;
+    }
+  </style>
+</head>
+
+
+<body>
+
+  <!-- START SCREEN -->
+
+  <div id="start-screen">
+    <div class="panel">
+
+      <h1>Looook</h1>
+
+      <p class="intro">
+        We will calibrate your gaze using 9 points.
+        <br>
+        Keep your head as still as possible.
+        <br>
+        Simply look at each red point until the ring completes.
+      </p>
+
+      <button id="start-button">
+        START CALIBRATION
+      </button>
+
+      <div id="error-message"></div>
+
+    </div>
+  </div>
+
+
+  <!-- CALIBRATION INSTRUCTION -->
+
+  <div id="instruction">
+
+    <div id="instruction-main">
+      Keep looking at the red point
+    </div>
+
+    <div id="progress-text">
+      Calibration point 1 / 9
+    </div>
+
+  </div>
+
+
+  <!-- MOVING CALIBRATION TARGET -->
+
+  <div id="calibration-target">
+
+    <svg
+      id="progress-ring"
+      viewBox="0 0 92 92"
+    >
+
+      <circle
+        id="ring-background"
+        cx="46"
+        cy="46"
+        r="40">
+      </circle>
+
+      <circle
+        id="ring-progress"
+        cx="46"
+        cy="46"
+        r="40">
+      </circle>
+
+    </svg>
+
+    <div id="target-dot"></div>
+
+  </div>
+
+
+  <!-- GAZE TEST -->
+
+  <div id="test-area">
+
+    <div id="test-title">
+
+      <strong>
+        Gaze Position Test
+      </strong>
+
+      <span>
+        Keep your head still.
+        Look LEFT, CENTER and RIGHT using only your eyes.
+      </span>
+
+    </div>
+
+
+    <div
+      class="zone"
+      id="left-zone">
+      LEFT
+    </div>
+
+    <div
+      class="zone"
+      id="center-zone">
+      CENTER
+    </div>
+
+    <div
+      class="zone"
+      id="right-zone">
+      RIGHT
+    </div>
+
+  </div>
+
+
+  <div id="gaze-dot"></div>
+
+  <div id="status">
+    Waiting for gaze data...
+  </div>
+
+
+  <script>
+
+    /* ========================================
+       SETTINGS
+    ======================================== */
+
+    const CALIBRATION_DWELL_MS = 2500;
+
+    const SETTLE_TIME_MS = 450;
+
+    const SAMPLE_INTERVAL_MS = 160;
+
+
+    /* ========================================
+       CALIBRATION POSITIONS
+    ======================================== */
+
+    const calibrationPositions = [
+
+      { x: 10, y: 14 },
+      { x: 50, y: 14 },
+      { x: 90, y: 14 },
+
+      { x: 10, y: 50 },
+      { x: 50, y: 50 },
+      { x: 90, y: 50 },
+
+      { x: 10, y: 86 },
+      { x: 50, y: 86 },
+      { x: 90, y: 86 }
+
+    ];
+
+
+    /* ========================================
+       ELEMENTS
+    ======================================== */
+
+    const startScreen =
+      document.getElementById("start-screen");
+
+    const startButton =
+      document.getElementById("start-button");
+
+    const errorMessage =
+      document.getElementById("error-message");
+
+    const instruction =
+      document.getElementById("instruction");
+
+    const progressText =
+      document.getElementById("progress-text");
+
+    const calibrationTarget =
+      document.getElementById("calibration-target");
+
+    const ringProgress =
+      document.getElementById("ring-progress");
+
+    const testArea =
+      document.getElementById("test-area");
+
+    const gazeDot =
+      document.getElementById("gaze-dot");
+
+    const status =
+      document.getElementById("status");
+
+    const leftZone =
+      document.getElementById("left-zone");
+
+    const centerZone =
+      document.getElementById("center-zone");
+
+    const rightZone =
+      document.getElementById("right-zone");
+
+
+    /* ========================================
+       STATE
+    ======================================== */
+
+    let currentCalibrationIndex = 0;
+
+    let calibrationStartTime = null;
+
+    let calibrationAnimationFrame = null;
+
+    let lastSampleTime = 0;
+
+    let testing = false;
+
+    let smoothedX = null;
+
+    let smoothedY = null;
+
+    const ringCircumference = 251.327;
+
+
+    /* ========================================
+       START WEBGAZER
+    ======================================== */
+
+    startButton.addEventListener(
+      "click",
+      async function () {
+
+        startButton.disabled = true;
+
+        startButton.textContent =
+          "STARTING CAMERA...";
+
+        errorMessage.style.display =
+          "none";
+
+
+        try {
+
+          /*
+            IMPORTANT:
+            clearData() must be called separately.
+          */
+
+          webgazer.saveDataAcrossSessions(false);
+
+          webgazer.clearData();
+
+
+          webgazer
+            .setRegression("ridge")
+            .applyKalmanFilter(true)
+            .showPredictionPoints(false)
+            .showVideo(true)
+            .showFaceOverlay(true)
+            .showFaceFeedbackBox(true);
+
+
+          webgazer.setGazeListener(
+            function (data) {
+
+              if (!data || !testing) {
+                return;
+              }
+
+
+              const smoothing = 0.22;
+
+
+              if (
+                smoothedX === null ||
+                smoothedY === null
+              ) {
+
+                smoothedX = data.x;
+
+                smoothedY = data.y;
+
+              }
+
+              else {
+
+                smoothedX +=
+                  (data.x - smoothedX) *
+                  smoothing;
+
+                smoothedY +=
+                  (data.y - smoothedY) *
+                  smoothing;
+
+              }
+
+
+              gazeDot.style.display =
+                "block";
+
+              gazeDot.style.left =
+                smoothedX + "px";
+
+              gazeDot.style.top =
+                smoothedY + "px";
+
+
+              status.textContent =
+                `gaze x: ${
+                  Math.round(smoothedX)
+                }   y: ${
+                  Math.round(smoothedY)
+                }`;
+
+
+              updateZone(smoothedX);
+
+            }
+          );
+
+
+          await webgazer.begin();
+
+
+          startScreen.style.display =
+            "none";
+
+          instruction.style.display =
+            "block";
+
+          calibrationTarget.style.display =
+            "block";
+
+
+          startCalibrationPoint();
+
+        }
+
+        catch (error) {
+
+          console.error(
+            "WebGazer startup error:",
+            error
+          );
+
+          startButton.disabled = false;
+
+          startButton.textContent =
+            "TRY AGAIN";
+
+          errorMessage.style.display =
+            "block";
+
+          errorMessage.textContent =
+            "WebGazer could not start. Check the DevTools Console.";
+
+        }
+
+      }
+    );
+
+
+    /* ========================================
+       START ONE CALIBRATION POINT
+    ======================================== */
+
+    function startCalibrationPoint() {
+
+      const position =
+        calibrationPositions[
+          currentCalibrationIndex
+        ];
+
+
+      calibrationTarget.style.left =
+        position.x + "%";
+
+      calibrationTarget.style.top =
+        position.y + "%";
+
+
+      progressText.textContent =
+        `Calibration point ${
+          currentCalibrationIndex + 1
+        } / ${
+          calibrationPositions.length
+        }`;
+
+
+      ringProgress.style.strokeDashoffset =
+        ringCircumference;
+
+
+      calibrationStartTime =
+        performance.now();
+
+      lastSampleTime = 0;
+
+
+      calibrationAnimationFrame =
+        requestAnimationFrame(
+          updateCalibrationPoint
+        );
+
+    }
+
+
+    /* ========================================
+       UPDATE CALIBRATION POINT
+    ======================================== */
+
+    function updateCalibrationPoint(now) {
+
+      const elapsed =
+        now - calibrationStartTime;
+
+
+      const progress =
+        Math.min(
+          elapsed / CALIBRATION_DWELL_MS,
+          1
+        );
+
+
+      const offset =
+        ringCircumference *
+        (1 - progress);
+
+
+      ringProgress.style.strokeDashoffset =
+        offset;
+
+
+      /*
+        After the short settle period,
+        repeatedly provide WebGazer with the
+        known screen position the user has
+        been instructed to look at.
+      */
+
+      if (
+        elapsed >= SETTLE_TIME_MS &&
+        now - lastSampleTime >= SAMPLE_INTERVAL_MS
+      ) {
+
+        const rect =
+          calibrationTarget
+            .getBoundingClientRect();
+
+
+        const targetX =
+          rect.left +
+          rect.width / 2;
+
+
+        const targetY =
+          rect.top +
+          rect.height / 2;
+
+
+        webgazer.recordScreenPosition(
+          targetX,
+          targetY,
+          "click"
+        );
+
+
+        lastSampleTime = now;
+
+      }
+
+
+      if (
+        elapsed <
+        CALIBRATION_DWELL_MS
+      ) {
+
+        calibrationAnimationFrame =
+          requestAnimationFrame(
+            updateCalibrationPoint
+          );
+
+      }
+
+      else {
+
+        completeCalibrationPoint();
+
+      }
+
+    }
+
+
+    /* ========================================
+       COMPLETE CALIBRATION POINT
+    ======================================== */
+
+    function completeCalibrationPoint() {
+
+      cancelAnimationFrame(
+        calibrationAnimationFrame
+      );
+
+
+      currentCalibrationIndex += 1;
+
+
+      if (
+        currentCalibrationIndex <
+        calibrationPositions.length
+      ) {
+
+        setTimeout(
+          startCalibrationPoint,
+          350
+        );
+
+      }
+
+      else {
+
+        finishCalibration();
+
+      }
+
+    }
+
+
+    /* ========================================
+       FINISH CALIBRATION
+    ======================================== */
+
+    function finishCalibration() {
+
+      calibrationTarget.style.display =
+        "none";
+
+      instruction.style.display =
+        "none";
+
+
+      testArea.style.display =
+        "block";
+
+      status.style.display =
+        "block";
+
+
+      testing = true;
+
+      smoothedX = null;
+
+      smoothedY = null;
+
+    }
+
+
+    /* ========================================
+       LEFT / CENTER / RIGHT TEST
+    ======================================== */
+
+    function updateZone(x) {
+
+      leftZone.classList.remove("active");
+
+      centerZone.classList.remove("active");
+
+      rightZone.classList.remove("active");
+
+
+      const width =
+        window.innerWidth;
+
+
+      if (
+        x < width / 3
+      ) {
+
+        leftZone.classList.add("active");
+
+      }
+
+      else if (
+        x < width * 2 / 3
+      ) {
+
+        centerZone.classList.add("active");
+
+      }
+
+      else {
+
+        rightZone.classList.add("active");
+
+      }
+
+    }
+
+
+    /* ========================================
+       CLEAN UP
+    ======================================== */
+
+    window.addEventListener(
+      "beforeunload",
+      function () {
+
+        if (calibrationAnimationFrame) {
+
+          cancelAnimationFrame(
+            calibrationAnimationFrame
+          );
+
+        }
+
+
+        try {
+
+          webgazer.end();
+
+        }
+
+        catch (error) {
+
+          console.warn(error);
+
+        }
+
+      }
+    );
+
+  </script>
+
+</body>
+
+</html>
