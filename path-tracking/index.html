@@ -107,16 +107,38 @@
       background: #ffcf4d;
       color: #111;
     }
+
+    #moving-dot {
+      position: absolute;
+
+      width: 26px;
+      height: 26px;
+
+      border-radius: 50%;
+
+      background: #ff5d5d;
+
+      transform: translate(-50%, -50%);
+
+      pointer-events: none;
+
+      z-index: 10;
+
+      box-shadow:
+        0 0 0 8px rgba(255, 93, 93, 0.15);
+    }
   </style>
 </head>
 
 
 <body>
 
-  <h1>Gaze Path Tracking Test</h1>
+  <h1>
+    Gaze Path Tracking Test
+  </h1>
 
   <p>
-    Follow the path with your eyes from START to END.
+    Follow the moving dot from START to END.
   </p>
 
 
@@ -160,6 +182,7 @@
       START
     </div>
 
+
     <div
       class="marker"
       id="end-marker"
@@ -167,7 +190,80 @@
       END
     </div>
 
+
+    <div
+      id="moving-dot"
+    >
+    </div>
+
   </div>
+
+
+  <script>
+
+    const path =
+      document.getElementById("route-center");
+
+    const movingDot =
+      document.getElementById("moving-dot");
+
+    const svg =
+      document.getElementById("path-svg");
+
+
+    const totalLength =
+      path.getTotalLength();
+
+
+    let progress = 0;
+
+
+    function animateDot() {
+
+      progress += 0.0015;
+
+
+      if (progress > 1) {
+
+        progress = 0;
+
+      }
+
+
+      const point =
+        path.getPointAtLength(
+          totalLength * progress
+        );
+
+
+      const svgRect =
+        svg.getBoundingClientRect();
+
+
+      const scaleX =
+        svgRect.width / 1000;
+
+      const scaleY =
+        svgRect.height / 560;
+
+
+      movingDot.style.left =
+        point.x * scaleX + "px";
+
+      movingDot.style.top =
+        point.y * scaleY + "px";
+
+
+      requestAnimationFrame(
+        animateDot
+      );
+
+    }
+
+
+    animateDot();
+
+  </script>
 
 </body>
 
