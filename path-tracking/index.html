@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Looook — Gaze Path Tracking Test</title>
+  <title>Looook — Gaze Path Tracking</title>
 
   <style>
     * {
@@ -17,36 +17,277 @@
       margin: 0;
       width: 100%;
       height: 100%;
+      overflow: hidden;
+
       background: #111;
       color: white;
+
       font-family: Arial, Helvetica, sans-serif;
-      overflow: hidden;
     }
 
     body {
+      position: relative;
+    }
+
+
+    /* =========================
+       START SCREEN
+    ========================= */
+
+    #start-screen {
+      position: fixed;
+      inset: 0;
+
       display: flex;
+      align-items: center;
+      justify-content: center;
+
+      background: #111;
+
+      z-index: 1000;
+    }
+
+    .start-panel {
+      width: min(620px, 88vw);
+      text-align: center;
+    }
+
+    .start-panel h1 {
+      margin: 0 0 18px;
+      font-size: 54px;
+    }
+
+    .start-panel p {
+      margin: 0;
+      color: #aaa;
+
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    #start-button {
+      margin-top: 28px;
+
+      padding: 16px 32px;
+
+      border: none;
+      border-radius: 999px;
+
+      background: white;
+      color: #111;
+
+      font-size: 17px;
+      font-weight: bold;
+
+      cursor: pointer;
+    }
+
+    #start-button:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    #error-message {
+      display: none;
+
+      margin-top: 20px;
+
+      color: #ff7777;
+      line-height: 1.5;
+    }
+
+
+    /* =========================
+       CAMERA
+    ========================= */
+
+    #camera-panel {
+      position: fixed;
+
+      left: 18px;
+      top: 18px;
+
+      width: 220px;
+
+      background: #222;
+
+      border-radius: 14px;
+
+      overflow: hidden;
+
+      display: none;
+
+      z-index: 600;
+    }
+
+    #video-wrapper {
+      position: relative;
+
+      width: 220px;
+      aspect-ratio: 4 / 3;
+
+      overflow: hidden;
+      background: black;
+    }
+
+    #webcam {
+      width: 100%;
+      height: 100%;
+
+      object-fit: cover;
+
+      transform: scaleX(-1);
+    }
+
+    #camera-status {
+      padding: 9px 12px;
+
+      color: #aaa;
+
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+
+    /* =========================
+       CALIBRATION
+    ========================= */
+
+    #calibration-screen {
+      position: fixed;
+      inset: 0;
+
+      display: none;
+
+      background: #111;
+
+      z-index: 400;
+    }
+
+    #calibration-instruction {
+      position: absolute;
+
+      top: 28px;
+      left: 50%;
+
+      transform: translateX(-50%);
+
+      text-align: center;
+
+      z-index: 410;
+    }
+
+    #calibration-instruction strong {
+      display: block;
+
+      margin-bottom: 6px;
+
+      font-size: 22px;
+    }
+
+    #calibration-instruction span {
+      color: #999;
+      font-size: 14px;
+    }
+
+    #calibration-target {
+      position: absolute;
+
+      width: 70px;
+      height: 70px;
+
+      border-radius: 50%;
+
+      transform: translate(-50%, -50%);
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      background: rgba(255, 79, 79, 0.14);
+
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.18);
+
+      transition:
+        left 0.25s ease,
+        top 0.25s ease;
+    }
+
+    #calibration-target::before {
+      content: "";
+
+      width: 22px;
+      height: 22px;
+
+      border-radius: 50%;
+
+      background: #ff5555;
+    }
+
+    #calibration-target.collecting {
+      background: rgba(0, 232, 145, 0.18);
+    }
+
+    #calibration-target.collecting::before {
+      background: #00e891;
+    }
+
+    #calibration-progress {
+      position: absolute;
+
+      left: 50%;
+      bottom: 36px;
+
+      transform: translateX(-50%);
+
+      color: #aaa;
+
+      font-size: 14px;
+    }
+
+
+    /* =========================
+       GAME UI
+    ========================= */
+
+    #game-screen {
+      position: fixed;
+      inset: 0;
+
+      display: none;
+
       flex-direction: column;
       align-items: center;
       justify-content: center;
+
+      background: #111;
+
+      z-index: 200;
     }
 
-    h1 {
-      margin: 0 0 10px;
-      font-size: 34px;
+    #game-title {
+      margin: 0 0 8px;
+
+      font-size: 32px;
     }
 
-    p {
-      margin: 0 0 30px;
+    #game-instruction {
+      margin-bottom: 22px;
+
       color: #999;
+
+      font-size: 14px;
     }
 
     #game-area {
       position: relative;
-      width: min(1000px, 90vw);
+
+      width: min(1000px, 88vw);
       height: 560px;
 
       border: 1px solid #333;
-      border-radius: 20px;
+      border-radius: 22px;
 
       background: #181818;
 
@@ -60,25 +301,48 @@
 
     #route-background {
       fill: none;
-      stroke: #3a3a3a;
-      stroke-width: 70;
+
+      stroke: #343434;
+      stroke-width: 90;
+
       stroke-linecap: round;
       stroke-linejoin: round;
     }
 
+    #route-progress {
+      fill: none;
+
+      stroke: #00e891;
+      stroke-width: 90;
+
+      stroke-linecap: round;
+      stroke-linejoin: round;
+
+      path-length: 1;
+
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+    }
+
     #route-center {
       fill: none;
-      stroke: #777;
-      stroke-width: 4;
-      stroke-dasharray: 10 12;
-      stroke-linecap: round;
+
+      stroke: rgba(255,255,255,0.26);
+      stroke-width: 3;
+
+      stroke-dasharray: 8 12;
     }
+
+
+    /* =========================
+       START / END
+    ========================= */
 
     .marker {
       position: absolute;
 
-      width: 70px;
-      height: 70px;
+      width: 72px;
+      height: 72px;
 
       border-radius: 50%;
 
@@ -86,10 +350,12 @@
       align-items: center;
       justify-content: center;
 
-      font-weight: bold;
-      font-size: 13px;
-
       transform: translate(-50%, -50%);
+
+      font-size: 12px;
+      font-weight: bold;
+
+      z-index: 20;
     }
 
     #start-marker {
@@ -104,15 +370,20 @@
       left: 88%;
       top: 28%;
 
-      background: #ffcf4d;
+      background: #ffd35c;
       color: #111;
     }
 
-    #moving-dot {
+
+    /* =========================
+       CURRENT TARGET
+    ========================= */
+
+    #current-target {
       position: absolute;
 
-      width: 26px;
-      height: 26px;
+      width: 34px;
+      height: 34px;
 
       border-radius: 50%;
 
@@ -120,148 +391,1985 @@
 
       transform: translate(-50%, -50%);
 
+      box-shadow:
+        0 0 0 13px rgba(255, 93, 93, 0.16);
+
       pointer-events: none;
 
-      z-index: 10;
+      z-index: 25;
 
-      box-shadow:
-        0 0 0 8px rgba(255, 93, 93, 0.15);
+      transition:
+        left 0.08s linear,
+        top 0.08s linear;
     }
+
+
+    /* =========================
+       GAZE DOT
+    ========================= */
+
+    #gaze-dot {
+      position: fixed;
+
+      width: 22px;
+      height: 22px;
+
+      border-radius: 50%;
+
+      border: 3px solid white;
+
+      background: rgba(0, 232, 145, 0.45);
+
+      transform: translate(-50%, -50%);
+
+      pointer-events: none;
+
+      display: none;
+
+      z-index: 900;
+    }
+
+
+    /* =========================
+       DEBUG
+    ========================= */
+
+    #debug-panel {
+      position: fixed;
+
+      right: 18px;
+      bottom: 18px;
+
+      width: 250px;
+
+      padding: 14px;
+
+      border-radius: 12px;
+
+      background: rgba(0,0,0,0.75);
+
+      color: #aaa;
+
+      font-family: monospace;
+      font-size: 12px;
+      line-height: 1.6;
+
+      display: none;
+
+      z-index: 700;
+    }
+
+    .good {
+      color: #00e891;
+    }
+
+    .bad {
+      color: #ff7070;
+    }
+
+
+    /* =========================
+       COMPLETE
+    ========================= */
+
+    #complete-message {
+      position: fixed;
+
+      left: 50%;
+      bottom: 34px;
+
+      transform: translateX(-50%);
+
+      color: #00e891;
+
+      font-size: 22px;
+      font-weight: bold;
+
+      opacity: 0;
+
+      transition: opacity 0.3s ease;
+
+      z-index: 800;
+    }
+
+    #complete-message.show {
+      opacity: 1;
+    }
+
   </style>
 </head>
 
 
 <body>
 
-  <h1>
-    Gaze Path Tracking Test
-  </h1>
 
-  <p>
-    Follow the moving dot from START to END.
-  </p>
+  <!-- =========================
+       START
+  ========================== -->
 
+  <div id="start-screen">
 
-  <div id="game-area">
+    <div class="start-panel">
 
-    <svg
-      id="path-svg"
-      viewBox="0 0 1000 560"
-      preserveAspectRatio="none"
-    >
+      <h1>
+        Looook
+      </h1>
 
-      <path
-        id="route-background"
-        d="
-          M 100 420
-          C 220 300, 270 470, 390 350
-          S 560 190, 660 310
-          S 790 410, 880 160
-        "
-      >
-      </path>
+      <p>
+        This prototype tests continuous gaze path tracking.
+        <br><br>
+        First, complete a 9-point eye calibration.
+        Then follow the curved path from START to END
+        using only your eyes.
+        <br><br>
+        Try to keep your head still during calibration.
+      </p>
 
-      <path
-        id="route-center"
-        d="
-          M 100 420
-          C 220 300, 270 470, 390 350
-          S 560 190, 660 310
-          S 790 410, 880 160
-        "
-      >
-      </path>
+      <button id="start-button">
+        START TEST
+      </button>
 
-    </svg>
+      <div id="error-message">
+      </div>
 
-
-    <div
-      class="marker"
-      id="start-marker"
-    >
-      START
-    </div>
-
-
-    <div
-      class="marker"
-      id="end-marker"
-    >
-      END
-    </div>
-
-
-    <div
-      id="moving-dot"
-    >
     </div>
 
   </div>
 
 
-  <script>
+  <!-- =========================
+       CAMERA
+  ========================== -->
 
-    const path =
-      document.getElementById("route-center");
+  <div id="camera-panel">
 
-    const movingDot =
-      document.getElementById("moving-dot");
+    <div id="video-wrapper">
+
+      <video
+        id="webcam"
+        autoplay
+        muted
+        playsinline>
+      </video>
+
+    </div>
+
+    <div id="camera-status">
+      Loading...
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       CALIBRATION
+  ========================== -->
+
+  <div id="calibration-screen">
+
+    <div id="calibration-instruction">
+
+      <strong>
+        Eye Calibration
+      </strong>
+
+      <span>
+        Keep your head still and look directly at the dot.
+      </span>
+
+    </div>
+
+
+    <div id="calibration-target">
+    </div>
+
+
+    <div id="calibration-progress">
+      Point 1 / 9
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       GAME
+  ========================== -->
+
+  <div id="game-screen">
+
+    <h1 id="game-title">
+      Follow the Path
+    </h1>
+
+    <div id="game-instruction">
+      Follow the red point slowly with your eyes.
+    </div>
+
+
+    <div id="game-area">
+
+      <svg
+        id="path-svg"
+        viewBox="0 0 1000 560"
+        preserveAspectRatio="none"
+      >
+
+        <path
+          id="route-background"
+          d="
+            M 100 420
+            C 220 300, 270 470, 390 350
+            S 560 190, 660 310
+            S 790 410, 880 160
+          "
+        >
+        </path>
+
+
+        <path
+          id="route-progress"
+          pathLength="1"
+          d="
+            M 100 420
+            C 220 300, 270 470, 390 350
+            S 560 190, 660 310
+            S 790 410, 880 160
+          "
+        >
+        </path>
+
+
+        <path
+          id="route-center"
+          d="
+            M 100 420
+            C 220 300, 270 470, 390 350
+            S 560 190, 660 310
+            S 790 410, 880 160
+          "
+        >
+        </path>
+
+      </svg>
+
+
+      <div
+        class="marker"
+        id="start-marker"
+      >
+        START
+      </div>
+
+
+      <div
+        class="marker"
+        id="end-marker"
+      >
+        END
+      </div>
+
+
+      <div id="current-target">
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- GAZE DOT -->
+
+  <div id="gaze-dot">
+  </div>
+
+
+  <!-- DEBUG -->
+
+  <div id="debug-panel">
+
+    <div>
+      Face:
+      <span id="face-state">
+        waiting
+      </span>
+    </div>
+
+    <div>
+      Raw H:
+      <span id="raw-h">
+        --
+      </span>
+    </div>
+
+    <div>
+      Raw V:
+      <span id="raw-v">
+        --
+      </span>
+    </div>
+
+    <div>
+      Gaze X:
+      <span id="gaze-x">
+        --
+      </span>
+    </div>
+
+    <div>
+      Gaze Y:
+      <span id="gaze-y">
+        --
+      </span>
+    </div>
+
+    <div>
+      Distance:
+      <span id="distance-value">
+        --
+      </span>
+    </div>
+
+    <div>
+      Progress:
+      <span id="progress-value">
+        0%
+      </span>
+    </div>
+
+    <div>
+      Tracking:
+      <span id="tracking-state">
+        waiting
+      </span>
+    </div>
+
+  </div>
+
+
+  <div id="complete-message">
+    PATH COMPLETE ✓
+  </div>
+
+
+
+  <!-- =========================
+       SCRIPT
+  ========================== -->
+
+  <script type="module">
+
+    import {
+      FaceLandmarker,
+      FilesetResolver
+    } from
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.2/+esm";
+
+
+    /* =========================
+       SETTINGS
+    ========================= */
+
+    const CHECKPOINT_COUNT = 45;
+
+    const PATH_TOLERANCE = 120;
+
+    const REQUIRED_FRAMES = 4;
+
+    const CALIBRATION_SETTLE_MS = 700;
+
+    const CALIBRATION_SAMPLE_MS = 1100;
+
+    const GAZE_SMOOTHING = 0.18;
+
+
+    /* =========================
+       ELEMENTS
+    ========================= */
+
+    const startScreen =
+      document.getElementById(
+        "start-screen"
+      );
+
+    const startButton =
+      document.getElementById(
+        "start-button"
+      );
+
+    const errorMessage =
+      document.getElementById(
+        "error-message"
+      );
+
+
+    const cameraPanel =
+      document.getElementById(
+        "camera-panel"
+      );
+
+    const cameraStatus =
+      document.getElementById(
+        "camera-status"
+      );
+
+    const video =
+      document.getElementById(
+        "webcam"
+      );
+
+
+    const calibrationScreen =
+      document.getElementById(
+        "calibration-screen"
+      );
+
+    const calibrationTarget =
+      document.getElementById(
+        "calibration-target"
+      );
+
+    const calibrationProgress =
+      document.getElementById(
+        "calibration-progress"
+      );
+
+
+    const gameScreen =
+      document.getElementById(
+        "game-screen"
+      );
+
+    const gameArea =
+      document.getElementById(
+        "game-area"
+      );
 
     const svg =
-      document.getElementById("path-svg");
+      document.getElementById(
+        "path-svg"
+      );
+
+    const path =
+      document.getElementById(
+        "route-center"
+      );
+
+    const progressPath =
+      document.getElementById(
+        "route-progress"
+      );
+
+    const currentTarget =
+      document.getElementById(
+        "current-target"
+      );
 
 
-    const totalLength =
-      path.getTotalLength();
+    const gazeDot =
+      document.getElementById(
+        "gaze-dot"
+      );
 
 
-    let progress = 0;
+    const debugPanel =
+      document.getElementById(
+        "debug-panel"
+      );
+
+    const faceState =
+      document.getElementById(
+        "face-state"
+      );
+
+    const rawHText =
+      document.getElementById(
+        "raw-h"
+      );
+
+    const rawVText =
+      document.getElementById(
+        "raw-v"
+      );
+
+    const gazeXText =
+      document.getElementById(
+        "gaze-x"
+      );
+
+    const gazeYText =
+      document.getElementById(
+        "gaze-y"
+      );
+
+    const distanceText =
+      document.getElementById(
+        "distance-value"
+      );
+
+    const progressText =
+      document.getElementById(
+        "progress-value"
+      );
+
+    const trackingState =
+      document.getElementById(
+        "tracking-state"
+      );
+
+    const completeMessage =
+      document.getElementById(
+        "complete-message"
+      );
 
 
-    function animateDot() {
+    /* =========================
+       STATE
+    ========================= */
 
-      progress += 0.0015;
+    let faceLandmarker = null;
+
+    let lastVideoTime = -1;
+
+    let running = false;
 
 
-      if (progress > 1) {
+    let latestEyeData = null;
 
-        progress = 0;
 
+    let calibrationMode = false;
+
+    let calibrationSamples = [];
+
+    let calibrationModelX = null;
+
+    let calibrationModelY = null;
+
+
+    let gazeX = null;
+    let gazeY = null;
+
+
+    let checkpoints = [];
+
+    let currentCheckpoint = 0;
+
+    let validFrames = 0;
+
+    let completed = false;
+
+
+    /* =========================
+       CALIBRATION POSITIONS
+    ========================= */
+
+    const calibrationPositions = [
+
+      { x: 12, y: 18 },
+      { x: 50, y: 18 },
+      { x: 88, y: 18 },
+
+      { x: 12, y: 50 },
+      { x: 50, y: 50 },
+      { x: 88, y: 50 },
+
+      { x: 12, y: 82 },
+      { x: 50, y: 82 },
+      { x: 88, y: 82 }
+
+    ];
+
+
+    /* =========================
+       HELPERS
+    ========================= */
+
+    function normalizedBetween(
+      value,
+      a,
+      b
+    ) {
+
+      const min =
+        Math.min(a, b);
+
+      const max =
+        Math.max(a, b);
+
+
+      const range =
+        max - min;
+
+
+      if (
+        range < 0.00001
+      ) {
+        return 0.5;
       }
 
 
-      const point =
-        path.getPointAtLength(
-          totalLength * progress
-        );
+      return (
+        value - min
+      ) / range;
+
+    }
 
 
-      const svgRect =
-        svg.getBoundingClientRect();
+    function average(
+      values
+    ) {
+
+      if (
+        values.length === 0
+      ) {
+        return 0;
+      }
 
 
-      const scaleX =
-        svgRect.width / 1000;
-
-      const scaleY =
-        svgRect.height / 560;
-
-
-      movingDot.style.left =
-        point.x * scaleX + "px";
-
-      movingDot.style.top =
-        point.y * scaleY + "px";
-
-
-      requestAnimationFrame(
-        animateDot
+      return (
+        values.reduce(
+          (sum, value) =>
+            sum + value,
+          0
+        )
+        /
+        values.length
       );
 
     }
 
 
-    animateDot();
+    /* =========================
+       SOLVE 3x3
+    ========================= */
+
+    function solve3x3(
+      matrix,
+      vector
+    ) {
+
+      const a =
+        matrix.map(
+          row =>
+            row.slice()
+        );
+
+
+      const b =
+        vector.slice();
+
+
+      for (
+        let i = 0;
+        i < 3;
+        i++
+      ) {
+
+        let maxRow = i;
+
+
+        for (
+          let j = i + 1;
+          j < 3;
+          j++
+        ) {
+
+          if (
+            Math.abs(
+              a[j][i]
+            )
+            >
+            Math.abs(
+              a[maxRow][i]
+            )
+          ) {
+
+            maxRow = j;
+
+          }
+
+        }
+
+
+        [
+          a[i],
+          a[maxRow]
+        ] =
+        [
+          a[maxRow],
+          a[i]
+        ];
+
+
+        [
+          b[i],
+          b[maxRow]
+        ] =
+        [
+          b[maxRow],
+          b[i]
+        ];
+
+
+        const pivot =
+          a[i][i];
+
+
+        if (
+          Math.abs(pivot)
+          < 0.0000001
+        ) {
+
+          throw new Error(
+            "Calibration matrix is unstable. Please recalibrate."
+          );
+
+        }
+
+
+        for (
+          let j = i;
+          j < 3;
+          j++
+        ) {
+
+          a[i][j] /=
+            pivot;
+
+        }
+
+
+        b[i] /=
+          pivot;
+
+
+        for (
+          let row = 0;
+          row < 3;
+          row++
+        ) {
+
+          if (
+            row === i
+          ) {
+            continue;
+          }
+
+
+          const factor =
+            a[row][i];
+
+
+          for (
+            let col = i;
+            col < 3;
+            col++
+          ) {
+
+            a[row][col] -=
+              factor *
+              a[i][col];
+
+          }
+
+
+          b[row] -=
+            factor *
+            b[i];
+
+        }
+
+      }
+
+
+      return b;
+
+    }
+
+
+    /* =========================
+       LINEAR REGRESSION
+    ========================= */
+
+    function fitLinearModel(
+      samples,
+      outputKey
+    ) {
+
+      let n = 0;
+
+      let sumH = 0;
+      let sumV = 0;
+
+      let sumHH = 0;
+      let sumVV = 0;
+      let sumHV = 0;
+
+      let sumY = 0;
+      let sumHY = 0;
+      let sumVY = 0;
+
+
+      for (
+        const sample
+        of samples
+      ) {
+
+        const h =
+          sample.h;
+
+        const v =
+          sample.v;
+
+        const y =
+          sample[outputKey];
+
+
+        n++;
+
+        sumH += h;
+        sumV += v;
+
+        sumHH +=
+          h * h;
+
+        sumVV +=
+          v * v;
+
+        sumHV +=
+          h * v;
+
+        sumY += y;
+
+        sumHY +=
+          h * y;
+
+        sumVY +=
+          v * y;
+
+      }
+
+
+      const matrix = [
+
+        [
+          n,
+          sumH,
+          sumV
+        ],
+
+        [
+          sumH,
+          sumHH,
+          sumHV
+        ],
+
+        [
+          sumV,
+          sumHV,
+          sumVV
+        ]
+
+      ];
+
+
+      const vector = [
+
+        sumY,
+
+        sumHY,
+
+        sumVY
+
+      ];
+
+
+      return solve3x3(
+        matrix,
+        vector
+      );
+
+    }
+
+
+    function predict(
+      model,
+      h,
+      v
+    ) {
+
+      return (
+        model[0]
+        +
+        model[1] * h
+        +
+        model[2] * v
+      );
+
+    }
+
+
+    /* =========================
+       START
+    ========================= */
+
+    startButton.addEventListener(
+      "click",
+      startTest
+    );
+
+
+    async function startTest() {
+
+      startButton.disabled =
+        true;
+
+      startButton.textContent =
+        "LOADING...";
+
+      errorMessage.style.display =
+        "none";
+
+
+      try {
+
+        cameraStatus.textContent =
+          "Loading MediaPipe...";
+
+
+        const vision =
+          await FilesetResolver
+            .forVisionTasks(
+
+              "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.2/wasm"
+
+            );
+
+
+        faceLandmarker =
+          await FaceLandmarker
+            .createFromOptions(
+
+              vision,
+
+              {
+
+                baseOptions: {
+
+                  modelAssetPath:
+
+                    "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
+
+                },
+
+                runningMode:
+                  "VIDEO",
+
+                numFaces:
+                  1,
+
+                minFaceDetectionConfidence:
+                  0.5,
+
+                minFacePresenceConfidence:
+                  0.5,
+
+                minTrackingConfidence:
+                  0.5
+
+              }
+
+            );
+
+
+        cameraStatus.textContent =
+          "Requesting camera...";
+
+
+        const stream =
+          await navigator.mediaDevices
+            .getUserMedia({
+
+              video: {
+
+                width: {
+                  ideal: 640
+                },
+
+                height: {
+                  ideal: 480
+                },
+
+                facingMode:
+                  "user"
+
+              },
+
+              audio:
+                false
+
+            });
+
+
+        video.srcObject =
+          stream;
+
+
+        await video.play();
+
+
+        startScreen.style.display =
+          "none";
+
+        cameraPanel.style.display =
+          "block";
+
+        debugPanel.style.display =
+          "block";
+
+
+        cameraStatus.textContent =
+          "Camera ready";
+
+
+        running =
+          true;
+
+
+        requestAnimationFrame(
+          renderLoop
+        );
+
+
+        await new Promise(
+          resolve =>
+            setTimeout(
+              resolve,
+              800
+            )
+        );
+
+
+        startCalibration();
+
+      }
+
+      catch (
+        error
+      ) {
+
+        console.error(
+          error
+        );
+
+
+        startButton.disabled =
+          false;
+
+        startButton.textContent =
+          "START TEST";
+
+
+        errorMessage.style.display =
+          "block";
+
+
+        errorMessage.textContent =
+          "Error: "
+          +
+          error.message;
+
+      }
+
+    }
+
+
+    /* =========================
+       RENDER LOOP
+    ========================= */
+
+    function renderLoop() {
+
+      if (
+        !running
+      ) {
+        return;
+      }
+
+
+      const now =
+        performance.now();
+
+
+      if (
+        video.readyState >= 2
+        &&
+        video.currentTime !==
+          lastVideoTime
+      ) {
+
+        lastVideoTime =
+          video.currentTime;
+
+
+        const result =
+          faceLandmarker
+            .detectForVideo(
+              video,
+              now
+            );
+
+
+        processFace(
+          result
+        );
+
+      }
+
+
+      requestAnimationFrame(
+        renderLoop
+      );
+
+    }
+
+
+    /* =========================
+       FACE PROCESSING
+    ========================= */
+
+    function processFace(
+      result
+    ) {
+
+      if (
+        !result.faceLandmarks
+        ||
+        result.faceLandmarks.length
+          === 0
+      ) {
+
+        faceState.textContent =
+          "NOT FOUND";
+
+        faceState.className =
+          "bad";
+
+
+        latestEyeData =
+          null;
+
+
+        return;
+
+      }
+
+
+      const lm =
+        result.faceLandmarks[0];
+
+
+      if (
+        !lm[468]
+        ||
+        !lm[473]
+      ) {
+
+        return;
+
+      }
+
+
+      faceState.textContent =
+        "detected";
+
+      faceState.className =
+        "good";
+
+
+      const leftIris =
+        lm[468];
+
+      const rightIris =
+        lm[473];
+
+
+      const leftH =
+        normalizedBetween(
+
+          leftIris.x,
+
+          lm[33].x,
+
+          lm[133].x
+
+        );
+
+
+      const rightH =
+        normalizedBetween(
+
+          rightIris.x,
+
+          lm[263].x,
+
+          lm[362].x
+
+        );
+
+
+      const leftV =
+        normalizedBetween(
+
+          leftIris.y,
+
+          lm[159].y,
+
+          lm[145].y
+
+        );
+
+
+      const rightV =
+        normalizedBetween(
+
+          rightIris.y,
+
+          lm[386].y,
+
+          lm[374].y
+
+        );
+
+
+      const h =
+        (
+          leftH +
+          rightH
+        )
+        /
+        2;
+
+
+      const v =
+        (
+          leftV +
+          rightV
+        )
+        /
+        2;
+
+
+      latestEyeData = {
+        h,
+        v
+      };
+
+
+      rawHText.textContent =
+        h.toFixed(3);
+
+      rawVText.textContent =
+        v.toFixed(3);
+
+
+      if (
+        !calibrationMode
+        &&
+        calibrationModelX
+        &&
+        calibrationModelY
+      ) {
+
+        updateGazePosition(
+          h,
+          v
+        );
+
+      }
+
+    }
+
+
+    /* =========================
+       CALIBRATION
+    ========================= */
+
+    async function startCalibration() {
+
+      calibrationMode =
+        true;
+
+      calibrationSamples =
+        [];
+
+
+      calibrationScreen.style.display =
+        "block";
+
+
+      for (
+        let i = 0;
+        i <
+        calibrationPositions.length;
+        i++
+      ) {
+
+        await collectCalibrationPoint(
+          i
+        );
+
+      }
+
+
+      calibrationMode =
+        false;
+
+
+      calibrationModelX =
+        fitLinearModel(
+          calibrationSamples,
+          "screenX"
+        );
+
+
+      calibrationModelY =
+        fitLinearModel(
+          calibrationSamples,
+          "screenY"
+        );
+
+
+      calibrationScreen.style.display =
+        "none";
+
+
+      startGame();
+
+    }
+
+
+    async function collectCalibrationPoint(
+      index
+    ) {
+
+      const point =
+        calibrationPositions[index];
+
+
+      calibrationTarget
+        .classList
+        .remove(
+          "collecting"
+        );
+
+
+      calibrationTarget.style.left =
+        point.x + "%";
+
+      calibrationTarget.style.top =
+        point.y + "%";
+
+
+      calibrationProgress.textContent =
+        "Point "
+        +
+        (index + 1)
+        +
+        " / "
+        +
+        calibrationPositions.length;
+
+
+      await new Promise(
+        resolve =>
+          setTimeout(
+            resolve,
+            CALIBRATION_SETTLE_MS
+          )
+      );
+
+
+      calibrationTarget
+        .classList
+        .add(
+          "collecting"
+        );
+
+
+      const hValues = [];
+      const vValues = [];
+
+
+      const startTime =
+        performance.now();
+
+
+      while (
+        performance.now()
+        -
+        startTime
+        <
+        CALIBRATION_SAMPLE_MS
+      ) {
+
+        if (
+          latestEyeData
+        ) {
+
+          hValues.push(
+            latestEyeData.h
+          );
+
+          vValues.push(
+            latestEyeData.v
+          );
+
+        }
+
+
+        await new Promise(
+          resolve =>
+            setTimeout(
+              resolve,
+              35
+            )
+        );
+
+      }
+
+
+      if (
+        hValues.length < 5
+      ) {
+
+        throw new Error(
+          "Not enough eye data during calibration."
+        );
+
+      }
+
+
+      const screenX =
+        window.innerWidth
+        *
+        point.x
+        /
+        100;
+
+
+      const screenY =
+        window.innerHeight
+        *
+        point.y
+        /
+        100;
+
+
+      calibrationSamples.push({
+
+        h:
+          average(
+            hValues
+          ),
+
+        v:
+          average(
+            vValues
+          ),
+
+        screenX,
+
+        screenY
+
+      });
+
+
+      calibrationTarget
+        .classList
+        .remove(
+          "collecting"
+        );
+
+    }
+
+
+    /* =========================
+       GAZE POSITION
+    ========================= */
+
+    function updateGazePosition(
+      h,
+      v
+    ) {
+
+      let predictedX =
+        predict(
+          calibrationModelX,
+          h,
+          v
+        );
+
+
+      let predictedY =
+        predict(
+          calibrationModelY,
+          h,
+          v
+        );
+
+
+      predictedX =
+        Math.max(
+          0,
+          Math.min(
+            window.innerWidth,
+            predictedX
+          )
+        );
+
+
+      predictedY =
+        Math.max(
+          0,
+          Math.min(
+            window.innerHeight,
+            predictedY
+          )
+        );
+
+
+      if (
+        gazeX === null
+      ) {
+
+        gazeX =
+          predictedX;
+
+        gazeY =
+          predictedY;
+
+      }
+
+      else {
+
+        gazeX +=
+          (
+            predictedX -
+            gazeX
+          )
+          *
+          GAZE_SMOOTHING;
+
+
+        gazeY +=
+          (
+            predictedY -
+            gazeY
+          )
+          *
+          GAZE_SMOOTHING;
+
+      }
+
+
+      gazeDot.style.display =
+        "block";
+
+
+      gazeDot.style.left =
+        gazeX + "px";
+
+      gazeDot.style.top =
+        gazeY + "px";
+
+
+      gazeXText.textContent =
+        Math.round(
+          gazeX
+        );
+
+
+      gazeYText.textContent =
+        Math.round(
+          gazeY
+        );
+
+
+      if (
+        gameScreen.style.display
+        ===
+        "flex"
+      ) {
+
+        processPathTracking();
+
+      }
+
+    }
+
+
+    /* =========================
+       GAME
+    ========================= */
+
+    function startGame() {
+
+      gameScreen.style.display =
+        "flex";
+
+
+      buildCheckpoints();
+
+      currentCheckpoint =
+        0;
+
+      completed =
+        false;
+
+      validFrames =
+        0;
+
+
+      updateCurrentTarget();
+
+      updateProgress();
+
+    }
+
+
+    function buildCheckpoints() {
+
+      checkpoints =
+        [];
+
+
+      const totalLength =
+        path.getTotalLength();
+
+
+      for (
+        let i = 0;
+        i <
+        CHECKPOINT_COUNT;
+        i++
+      ) {
+
+        const ratio =
+          i
+          /
+          (
+            CHECKPOINT_COUNT
+            -
+            1
+          );
+
+
+        const point =
+          path.getPointAtLength(
+
+            totalLength
+            *
+            ratio
+
+          );
+
+
+        checkpoints.push({
+
+          x:
+            point.x,
+
+          y:
+            point.y
+
+        });
+
+      }
+
+    }
+
+
+    function getScreenCheckpoint(
+      index
+    ) {
+
+      const point =
+        checkpoints[index];
+
+
+      const rect =
+        svg.getBoundingClientRect();
+
+
+      const scaleX =
+        rect.width
+        /
+        1000;
+
+
+      const scaleY =
+        rect.height
+        /
+        560;
+
+
+      return {
+
+        x:
+          rect.left
+          +
+          point.x
+          *
+          scaleX,
+
+        y:
+          rect.top
+          +
+          point.y
+          *
+          scaleY
+
+      };
+
+    }
+
+
+    function updateCurrentTarget() {
+
+      if (
+        currentCheckpoint
+        >=
+        checkpoints.length
+      ) {
+        return;
+      }
+
+
+      const target =
+        getScreenCheckpoint(
+          currentCheckpoint
+        );
+
+
+      const gameRect =
+        gameArea
+          .getBoundingClientRect();
+
+
+      currentTarget.style.left =
+        (
+          target.x
+          -
+          gameRect.left
+        )
+        +
+        "px";
+
+
+      currentTarget.style.top =
+        (
+          target.y
+          -
+          gameRect.top
+        )
+        +
+        "px";
+
+    }
+
+
+    function processPathTracking() {
+
+      if (
+        completed
+        ||
+        gazeX === null
+        ||
+        gazeY === null
+      ) {
+        return;
+      }
+
+
+      const target =
+        getScreenCheckpoint(
+          currentCheckpoint
+        );
+
+
+      const distance =
+        Math.hypot(
+
+          gazeX -
+          target.x,
+
+          gazeY -
+          target.y
+
+        );
+
+
+      distanceText.textContent =
+        Math.round(
+          distance
+        );
+
+
+      if (
+        distance
+        <
+        PATH_TOLERANCE
+      ) {
+
+        validFrames++;
+
+
+        trackingState.textContent =
+          "ON PATH";
+
+        trackingState.className =
+          "good";
+
+
+        if (
+          validFrames
+          >=
+          REQUIRED_FRAMES
+        ) {
+
+          currentCheckpoint++;
+
+          validFrames =
+            0;
+
+
+          if (
+            currentCheckpoint
+            >=
+            checkpoints.length
+          ) {
+
+            finishPath();
+
+          }
+
+          else {
+
+            updateCurrentTarget();
+
+            updateProgress();
+
+          }
+
+        }
+
+      }
+
+      else {
+
+        validFrames =
+          0;
+
+
+        trackingState.textContent =
+          "OFF PATH";
+
+        trackingState.className =
+          "bad";
+
+      }
+
+    }
+
+
+    function updateProgress() {
+
+      const progress =
+        currentCheckpoint
+        /
+        (
+          checkpoints.length
+          -
+          1
+        );
+
+
+      progressPath.style
+        .strokeDashoffset =
+          1 - progress;
+
+
+      progressText.textContent =
+        Math.round(
+          progress * 100
+        )
+        +
+        "%";
+
+    }
+
+
+    function finishPath() {
+
+      completed =
+        true;
+
+
+      currentTarget.style.display =
+        "none";
+
+
+      progressPath.style
+        .strokeDashoffset =
+          0;
+
+
+      progressText.textContent =
+        "100%";
+
+
+      trackingState.textContent =
+        "COMPLETE";
+
+      trackingState.className =
+        "good";
+
+
+      completeMessage.classList
+        .add(
+          "show"
+        );
+
+    }
+
+
+    /* =========================
+       CLEANUP
+    ========================= */
+
+    window.addEventListener(
+      "beforeunload",
+      function() {
+
+        running =
+          false;
+
+
+        if (
+          video.srcObject
+        ) {
+
+          video.srcObject
+            .getTracks()
+            .forEach(
+              track =>
+                track.stop()
+            );
+
+        }
+
+      }
+    );
 
   </script>
 
