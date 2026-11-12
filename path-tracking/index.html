@@ -3,11 +3,17 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
-  <title>Looook — Gaze Path Tracking</title>
+  <title>
+    Looook — Gaze Path Tracking
+  </title>
 
   <style>
+
     * {
       box-sizing: border-box;
     }
@@ -22,16 +28,19 @@
       background: #111;
       color: white;
 
-      font-family: Arial, Helvetica, sans-serif;
+      font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
     }
 
-    body {
-      position: relative;
+    button {
+      font: inherit;
     }
 
 
     /* =========================
-       START SCREEN
+       START
     ========================= */
 
     #start-screen {
@@ -49,16 +58,19 @@
 
     .start-panel {
       width: min(620px, 88vw);
+
       text-align: center;
     }
 
     .start-panel h1 {
       margin: 0 0 18px;
+
       font-size: 54px;
     }
 
     .start-panel p {
       margin: 0;
+
       color: #aaa;
 
       font-size: 16px;
@@ -84,7 +96,6 @@
 
     #start-button:disabled {
       opacity: 0.5;
-      cursor: default;
     }
 
     #error-message {
@@ -93,6 +104,7 @@
       margin-top: 20px;
 
       color: #ff7777;
+
       line-height: 1.5;
     }
 
@@ -107,26 +119,25 @@
       left: 18px;
       top: 18px;
 
-      width: 220px;
-
-      background: #222;
+      width: 210px;
 
       border-radius: 14px;
 
       overflow: hidden;
 
+      background: #222;
+
       display: none;
 
-      z-index: 600;
+      z-index: 700;
     }
 
     #video-wrapper {
-      position: relative;
-
-      width: 220px;
+      width: 210px;
       aspect-ratio: 4 / 3;
 
       overflow: hidden;
+
       background: black;
     }
 
@@ -145,7 +156,7 @@
       color: #aaa;
 
       font-size: 12px;
-      line-height: 1.45;
+      line-height: 1.5;
     }
 
 
@@ -161,7 +172,7 @@
 
       background: #111;
 
-      z-index: 400;
+      z-index: 500;
     }
 
     #calibration-instruction {
@@ -173,45 +184,48 @@
       transform: translateX(-50%);
 
       text-align: center;
-
-      z-index: 410;
     }
 
     #calibration-instruction strong {
       display: block;
 
-      margin-bottom: 6px;
+      margin-bottom: 7px;
 
       font-size: 22px;
     }
 
     #calibration-instruction span {
       color: #999;
+
       font-size: 14px;
     }
 
     #calibration-target {
       position: absolute;
 
-      width: 70px;
-      height: 70px;
+      width: 74px;
+      height: 74px;
 
       border-radius: 50%;
 
-      transform: translate(-50%, -50%);
+      transform:
+        translate(-50%, -50%);
 
       display: flex;
       align-items: center;
       justify-content: center;
 
-      background: rgba(255, 79, 79, 0.14);
+      background:
+        rgba(255, 85, 85, 0.13);
 
       box-shadow:
-        0 0 0 1px rgba(255,255,255,0.18);
+        0 0 0 1px
+        rgba(255,255,255,0.18);
 
       transition:
-        left 0.25s ease,
-        top 0.25s ease;
+        left 0.18s ease,
+        top 0.18s ease,
+        background 0.15s ease;
     }
 
     #calibration-target::before {
@@ -226,7 +240,8 @@
     }
 
     #calibration-target.collecting {
-      background: rgba(0, 232, 145, 0.18);
+      background:
+        rgba(0, 232, 145, 0.17);
     }
 
     #calibration-target.collecting::before {
@@ -237,9 +252,10 @@
       position: absolute;
 
       left: 50%;
-      bottom: 36px;
+      bottom: 34px;
 
-      transform: translateX(-50%);
+      transform:
+        translateX(-50%);
 
       color: #aaa;
 
@@ -248,7 +264,7 @@
 
 
     /* =========================
-       GAME UI
+       GAME
     ========================= */
 
     #game-screen {
@@ -273,7 +289,7 @@
     }
 
     #game-instruction {
-      margin-bottom: 22px;
+      margin-bottom: 18px;
 
       color: #999;
 
@@ -289,9 +305,9 @@
       border: 1px solid #333;
       border-radius: 22px;
 
-      background: #181818;
-
       overflow: hidden;
+
+      background: #181818;
     }
 
     #path-svg {
@@ -318,8 +334,6 @@
       stroke-linecap: round;
       stroke-linejoin: round;
 
-      path-length: 1;
-
       stroke-dasharray: 1;
       stroke-dashoffset: 1;
     }
@@ -327,15 +341,18 @@
     #route-center {
       fill: none;
 
-      stroke: rgba(255,255,255,0.26);
+      stroke:
+        rgba(255,255,255,0.25);
+
       stroke-width: 3;
 
-      stroke-dasharray: 8 12;
+      stroke-dasharray:
+        8 12;
     }
 
 
     /* =========================
-       START / END
+       MARKERS
     ========================= */
 
     .marker {
@@ -350,7 +367,8 @@
       align-items: center;
       justify-content: center;
 
-      transform: translate(-50%, -50%);
+      transform:
+        translate(-50%, -50%);
 
       font-size: 12px;
       font-weight: bold;
@@ -376,7 +394,7 @@
 
 
     /* =========================
-       CURRENT TARGET
+       ACTIVE TARGET
     ========================= */
 
     #current-target {
@@ -389,44 +407,82 @@
 
       background: #ff5d5d;
 
-      transform: translate(-50%, -50%);
+      transform:
+        translate(-50%, -50%);
 
       box-shadow:
-        0 0 0 13px rgba(255, 93, 93, 0.16);
+        0 0 0 14px
+        rgba(255,93,93,0.16);
 
       pointer-events: none;
 
       z-index: 25;
-
-      transition:
-        left 0.08s linear,
-        top 0.08s linear;
     }
 
 
     /* =========================
-       GAZE DOT
+       GAZE
     ========================= */
 
     #gaze-dot {
       position: fixed;
 
-      width: 22px;
-      height: 22px;
+      width: 24px;
+      height: 24px;
 
       border-radius: 50%;
 
-      border: 3px solid white;
+      border:
+        3px solid white;
 
-      background: rgba(0, 232, 145, 0.45);
+      background:
+        rgba(0,232,145,0.45);
 
-      transform: translate(-50%, -50%);
+      transform:
+        translate(-50%, -50%);
 
       pointer-events: none;
 
       display: none;
 
       z-index: 900;
+    }
+
+
+    /* =========================
+       CONTROLS
+    ========================= */
+
+    #controls {
+      margin-top: 14px;
+
+      display: flex;
+      gap: 10px;
+    }
+
+    .control-button {
+      padding:
+        9px 16px;
+
+      border:
+        1px solid #444;
+
+      border-radius:
+        999px;
+
+      background:
+        #222;
+
+      color:
+        #ddd;
+
+      cursor:
+        pointer;
+    }
+
+    .control-button:hover {
+      background:
+        #2d2d2d;
     }
 
 
@@ -440,13 +496,14 @@
       right: 18px;
       bottom: 18px;
 
-      width: 250px;
+      width: 270px;
 
       padding: 14px;
 
       border-radius: 12px;
 
-      background: rgba(0,0,0,0.75);
+      background:
+        rgba(0,0,0,0.78);
 
       color: #aaa;
 
@@ -467,6 +524,10 @@
       color: #ff7070;
     }
 
+    .warning {
+      color: #ffd35c;
+    }
+
 
     /* =========================
        COMPLETE
@@ -476,9 +537,10 @@
       position: fixed;
 
       left: 50%;
-      bottom: 34px;
+      bottom: 32px;
 
-      transform: translateX(-50%);
+      transform:
+        translateX(-50%);
 
       color: #00e891;
 
@@ -487,7 +549,8 @@
 
       opacity: 0;
 
-      transition: opacity 0.3s ease;
+      transition:
+        opacity 0.3s ease;
 
       z-index: 800;
     }
@@ -497,6 +560,7 @@
     }
 
   </style>
+
 </head>
 
 
@@ -505,7 +569,7 @@
 
   <!-- =========================
        START
-  ========================== -->
+  ========================= -->
 
   <div id="start-screen">
 
@@ -516,13 +580,24 @@
       </h1>
 
       <p>
-        This prototype tests continuous gaze path tracking.
+        This prototype tests
+        continuous gaze path tracking.
         <br><br>
-        First, complete a 9-point eye calibration.
-        Then follow the curved path from START to END
+
+        First complete a
+        16-point calibration.
+
+        <br>
+
+        Keep your head as still
+        as possible and look
+        directly at each dot.
+
+        <br><br>
+
+        After calibration,
+        follow the curved route
         using only your eyes.
-        <br><br>
-        Try to keep your head still during calibration.
       </p>
 
       <button id="start-button">
@@ -539,7 +614,7 @@
 
   <!-- =========================
        CAMERA
-  ========================== -->
+  ========================= -->
 
   <div id="camera-panel">
 
@@ -563,7 +638,7 @@
 
   <!-- =========================
        CALIBRATION
-  ========================== -->
+  ========================= -->
 
   <div id="calibration-screen">
 
@@ -574,7 +649,8 @@
       </strong>
 
       <span>
-        Keep your head still and look directly at the dot.
+        Look at the dot.
+        Keep your head still.
       </span>
 
     </div>
@@ -585,7 +661,7 @@
 
 
     <div id="calibration-progress">
-      Point 1 / 9
+      Point 1 / 16
     </div>
 
   </div>
@@ -593,7 +669,7 @@
 
   <!-- =========================
        GAME
-  ========================== -->
+  ========================= -->
 
   <div id="game-screen">
 
@@ -602,7 +678,8 @@
     </h1>
 
     <div id="game-instruction">
-      Follow the red point slowly with your eyes.
+      Follow the red point slowly
+      with your eyes.
     </div>
 
 
@@ -674,22 +751,53 @@
 
     </div>
 
+
+    <div id="controls">
+
+      <button
+        class="control-button"
+        id="recalibrate-button"
+      >
+        RECALIBRATE
+      </button>
+
+
+      <button
+        class="control-button"
+        id="restart-button"
+      >
+        RESTART PATH
+      </button>
+
+    </div>
+
   </div>
 
 
-  <!-- GAZE DOT -->
+  <!-- =========================
+       GAZE DOT
+  ========================= -->
 
   <div id="gaze-dot">
   </div>
 
 
-  <!-- DEBUG -->
+  <!-- =========================
+       DEBUG
+  ========================= -->
 
   <div id="debug-panel">
 
     <div>
       Face:
       <span id="face-state">
+        waiting
+      </span>
+    </div>
+
+    <div>
+      Head:
+      <span id="head-state">
         waiting
       </span>
     </div>
@@ -752,39 +860,44 @@
 
 
 
-  <!-- =========================
-       SCRIPT
-  ========================== -->
-
   <script type="module">
 
     import {
       FaceLandmarker,
       FilesetResolver
-    } from
+    }
+    from
       "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.2/+esm";
 
 
-    /* =========================
+    /* ==================================================
        SETTINGS
-    ========================= */
+    ================================================== */
 
-    const CHECKPOINT_COUNT = 45;
+    const CHECKPOINT_COUNT =
+      50;
 
-    const PATH_TOLERANCE = 120;
+    const PATH_TOLERANCE =
+      135;
 
-    const REQUIRED_FRAMES = 4;
-
-    const CALIBRATION_SETTLE_MS = 700;
-
-    const CALIBRATION_SAMPLE_MS = 1100;
-
-    const GAZE_SMOOTHING = 0.18;
+    const REQUIRED_FRAMES =
+      4;
 
 
-    /* =========================
+    const CALIBRATION_SETTLE_MS =
+      500;
+
+    const CALIBRATION_SAMPLE_MS =
+      900;
+
+
+    const DEAD_ZONE =
+      7;
+
+
+    /* ==================================================
        ELEMENTS
-    ========================= */
+    ================================================== */
 
     const startScreen =
       document.getElementById(
@@ -881,6 +994,11 @@
         "face-state"
       );
 
+    const headState =
+      document.getElementById(
+        "head-state"
+      );
+
     const rawHText =
       document.getElementById(
         "raw-h"
@@ -916,72 +1034,114 @@
         "tracking-state"
       );
 
+
+    const recalibrateButton =
+      document.getElementById(
+        "recalibrate-button"
+      );
+
+    const restartButton =
+      document.getElementById(
+        "restart-button"
+      );
+
+
     const completeMessage =
       document.getElementById(
         "complete-message"
       );
 
 
-    /* =========================
+    /* ==================================================
        STATE
-    ========================= */
+    ================================================== */
 
-    let faceLandmarker = null;
+    let faceLandmarker =
+      null;
 
-    let lastVideoTime = -1;
+    let lastVideoTime =
+      -1;
 
-    let running = false;
-
-
-    let latestEyeData = null;
-
-
-    let calibrationMode = false;
-
-    let calibrationSamples = [];
-
-    let calibrationModelX = null;
-
-    let calibrationModelY = null;
+    let running =
+      false;
 
 
-    let gazeX = null;
-    let gazeY = null;
+    let latestEyeData =
+      null;
 
 
-    let checkpoints = [];
+    let calibrationMode =
+      false;
 
-    let currentCheckpoint = 0;
+    let calibrationSamples =
+      [];
 
-    let validFrames = 0;
+    let modelX =
+      null;
 
-    let completed = false;
+    let modelY =
+      null;
 
 
-    /* =========================
-       CALIBRATION POSITIONS
-    ========================= */
+    let gazeX =
+      null;
+
+    let gazeY =
+      null;
+
+
+    let calibrationHeadX =
+      null;
+
+    let calibrationHeadY =
+      null;
+
+
+    let checkpoints =
+      [];
+
+    let currentCheckpoint =
+      0;
+
+    let validFrames =
+      0;
+
+    let completed =
+      false;
+
+
+    /* ==================================================
+       16 CALIBRATION POINTS
+    ================================================== */
 
     const calibrationPositions = [
 
-      { x: 12, y: 18 },
-      { x: 50, y: 18 },
-      { x: 88, y: 18 },
+      { x: 10, y: 15 },
+      { x: 37, y: 15 },
+      { x: 63, y: 15 },
+      { x: 90, y: 15 },
 
-      { x: 12, y: 50 },
-      { x: 50, y: 50 },
-      { x: 88, y: 50 },
+      { x: 10, y: 38 },
+      { x: 37, y: 38 },
+      { x: 63, y: 38 },
+      { x: 90, y: 38 },
 
-      { x: 12, y: 82 },
-      { x: 50, y: 82 },
-      { x: 88, y: 82 }
+      { x: 10, y: 62 },
+      { x: 37, y: 62 },
+      { x: 63, y: 62 },
+      { x: 90, y: 62 },
+
+      { x: 10, y: 85 },
+      { x: 37, y: 85 },
+      { x: 63, y: 85 },
+      { x: 90, y: 85 }
 
     ];
 
 
-    /* =========================
-       HELPERS
-    ========================= */
+    /* ==================================================
+       BASIC HELPERS
+    ================================================== */
 
     function normalizedBetween(
       value,
@@ -990,62 +1150,148 @@
     ) {
 
       const min =
-        Math.min(a, b);
+        Math.min(
+          a,
+          b
+        );
 
       const max =
-        Math.max(a, b);
-
+        Math.max(
+          a,
+          b
+        );
 
       const range =
         max - min;
 
 
       if (
-        range < 0.00001
+        range <
+        0.000001
       ) {
+
         return 0.5;
+
       }
 
 
       return (
         value - min
-      ) / range;
+      )
+      /
+      range;
 
     }
 
 
-    function average(
-      values
+    function trimmedMean(
+      values,
+      trimRatio = 0.15
     ) {
 
       if (
         values.length === 0
       ) {
+
         return 0;
+
       }
 
 
+      const sorted =
+        [...values]
+          .sort(
+            (a, b) =>
+              a - b
+          );
+
+
+      const trim =
+        Math.floor(
+          sorted.length
+          *
+          trimRatio
+        );
+
+
+      const sliced =
+        sorted.slice(
+          trim,
+          sorted.length - trim
+        );
+
+
+      const usable =
+        sliced.length
+        ?
+        sliced
+        :
+        sorted;
+
+
       return (
-        values.reduce(
+        usable.reduce(
           (sum, value) =>
             sum + value,
           0
         )
         /
-        values.length
+        usable.length
       );
 
     }
 
 
-    /* =========================
-       SOLVE 3x3
-    ========================= */
+    /* ==================================================
+       FEATURE VECTOR
+    ================================================== */
 
-    function solve3x3(
+    function createFeatures(
+      data
+    ) {
+
+      const h =
+        data.h;
+
+      const v =
+        data.v;
+
+
+      return [
+
+        1,
+
+        h,
+
+        v,
+
+        h * h,
+
+        v * v,
+
+        h * v,
+
+        data.headX,
+
+        data.headY
+
+      ];
+
+    }
+
+
+    /* ==================================================
+       GENERIC LINEAR SOLVER
+    ================================================== */
+
+    function solveLinearSystem(
       matrix,
       vector
     ) {
+
+      const n =
+        matrix.length;
+
 
       const a =
         matrix.map(
@@ -1060,22 +1306,23 @@
 
       for (
         let i = 0;
-        i < 3;
+        i < n;
         i++
       ) {
 
-        let maxRow = i;
+        let maxRow =
+          i;
 
 
         for (
-          let j = i + 1;
-          j < 3;
-          j++
+          let row = i + 1;
+          row < n;
+          row++
         ) {
 
           if (
             Math.abs(
-              a[j][i]
+              a[row][i]
             )
             >
             Math.abs(
@@ -1083,7 +1330,8 @@
             )
           ) {
 
-            maxRow = j;
+            maxRow =
+              row;
 
           }
 
@@ -1110,29 +1358,34 @@
         ];
 
 
-        const pivot =
+        let pivot =
           a[i][i];
 
 
         if (
-          Math.abs(pivot)
-          < 0.0000001
+          Math.abs(
+            pivot
+          )
+          <
+          0.000000001
         ) {
 
-          throw new Error(
-            "Calibration matrix is unstable. Please recalibrate."
-          );
+          pivot =
+            0.000000001;
+
+          a[i][i] =
+            pivot;
 
         }
 
 
         for (
-          let j = i;
-          j < 3;
-          j++
+          let col = i;
+          col < n;
+          col++
         ) {
 
-          a[i][j] /=
+          a[i][col] /=
             pivot;
 
         }
@@ -1144,14 +1397,16 @@
 
         for (
           let row = 0;
-          row < 3;
+          row < n;
           row++
         ) {
 
           if (
             row === i
           ) {
+
             continue;
+
           }
 
 
@@ -1161,19 +1416,21 @@
 
           for (
             let col = i;
-            col < 3;
+            col < n;
             col++
           ) {
 
             a[row][col] -=
-              factor *
+              factor
+              *
               a[i][col];
 
           }
 
 
           b[row] -=
-            factor *
+            factor
+            *
             b[i];
 
         }
@@ -1186,27 +1443,38 @@
     }
 
 
-    /* =========================
-       LINEAR REGRESSION
-    ========================= */
+    /* ==================================================
+       RIDGE REGRESSION
+    ================================================== */
 
-    function fitLinearModel(
+    function fitModel(
       samples,
       outputKey
     ) {
 
-      let n = 0;
+      const featureCount =
+        createFeatures(
+          samples[0]
+        ).length;
 
-      let sumH = 0;
-      let sumV = 0;
 
-      let sumHH = 0;
-      let sumVV = 0;
-      let sumHV = 0;
+      const matrix =
+        Array.from(
+          {
+            length:
+              featureCount
+          },
+          () =>
+            Array(
+              featureCount
+            ).fill(0)
+        );
 
-      let sumY = 0;
-      let sumHY = 0;
-      let sumVY = 0;
+
+      const vector =
+        Array(
+          featureCount
+        ).fill(0);
 
 
       for (
@@ -1214,76 +1482,71 @@
         of samples
       ) {
 
-        const h =
-          sample.h;
+        const features =
+          createFeatures(
+            sample
+          );
 
-        const v =
-          sample.v;
 
-        const y =
+        const output =
           sample[outputKey];
 
 
-        n++;
+        for (
+          let i = 0;
+          i < featureCount;
+          i++
+        ) {
 
-        sumH += h;
-        sumV += v;
+          vector[i] +=
+            features[i]
+            *
+            output;
 
-        sumHH +=
-          h * h;
 
-        sumVV +=
-          v * v;
+          for (
+            let j = 0;
+            j < featureCount;
+            j++
+          ) {
 
-        sumHV +=
-          h * v;
+            matrix[i][j] +=
+              features[i]
+              *
+              features[j];
 
-        sumY += y;
+          }
 
-        sumHY +=
-          h * y;
-
-        sumVY +=
-          v * y;
+        }
 
       }
 
 
-      const matrix = [
+      /*
+        Small ridge regularization.
 
-        [
-          n,
-          sumH,
-          sumV
-        ],
+        Prevents unstable calibration
+        when some calibration samples
+        are too similar.
+      */
 
-        [
-          sumH,
-          sumHH,
-          sumHV
-        ],
-
-        [
-          sumV,
-          sumHV,
-          sumVV
-        ]
-
-      ];
+      const lambda =
+        0.002;
 
 
-      const vector = [
+      for (
+        let i = 1;
+        i < featureCount;
+        i++
+      ) {
 
-        sumY,
+        matrix[i][i] +=
+          lambda;
 
-        sumHY,
-
-        sumVY
-
-      ];
+      }
 
 
-      return solve3x3(
+      return solveLinearSystem(
         matrix,
         vector
       );
@@ -1293,24 +1556,41 @@
 
     function predict(
       model,
-      h,
-      v
+      data
     ) {
 
-      return (
-        model[0]
-        +
-        model[1] * h
-        +
-        model[2] * v
-      );
+      const features =
+        createFeatures(
+          data
+        );
+
+
+      let result =
+        0;
+
+
+      for (
+        let i = 0;
+        i < model.length;
+        i++
+      ) {
+
+        result +=
+          model[i]
+          *
+          features[i];
+
+      }
+
+
+      return result;
 
     }
 
 
-    /* =========================
+    /* ==================================================
        START
-    ========================= */
+    ================================================== */
 
     startButton.addEventListener(
       "click",
@@ -1326,18 +1606,16 @@
       startButton.textContent =
         "LOADING...";
 
+
       errorMessage.style.display =
         "none";
 
 
       try {
 
-        cameraStatus.textContent =
-          "Loading MediaPipe...";
-
-
         const vision =
-          await FilesetResolver
+          await
+          FilesetResolver
             .forVisionTasks(
 
               "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.2/wasm"
@@ -1346,7 +1624,8 @@
 
 
         faceLandmarker =
-          await FaceLandmarker
+          await
+          FaceLandmarker
             .createFromOptions(
 
               vision,
@@ -1381,22 +1660,21 @@
             );
 
 
-        cameraStatus.textContent =
-          "Requesting camera...";
-
-
         const stream =
-          await navigator.mediaDevices
+          await
+          navigator.mediaDevices
             .getUserMedia({
 
               video: {
 
                 width: {
-                  ideal: 640
+                  ideal:
+                    1280
                 },
 
                 height: {
-                  ideal: 480
+                  ideal:
+                    720
                 },
 
                 facingMode:
@@ -1414,14 +1692,13 @@
           stream;
 
 
-        await video.play();
+        await
+        video.play();
 
 
         startScreen.style.display =
           "none";
 
-        cameraPanel.style.display =
-          "block";
 
         debugPanel.style.display =
           "block";
@@ -1444,7 +1721,7 @@
           resolve =>
             setTimeout(
               resolve,
-              800
+              1000
             )
         );
 
@@ -1465,6 +1742,7 @@
         startButton.disabled =
           false;
 
+
         startButton.textContent =
           "START TEST";
 
@@ -1483,16 +1761,18 @@
     }
 
 
-    /* =========================
-       RENDER LOOP
-    ========================= */
+    /* ==================================================
+       CAMERA LOOP
+    ================================================== */
 
     function renderLoop() {
 
       if (
         !running
       ) {
+
         return;
+
       }
 
 
@@ -1504,7 +1784,7 @@
         video.readyState >= 2
         &&
         video.currentTime !==
-          lastVideoTime
+        lastVideoTime
       ) {
 
         lastVideoTime =
@@ -1533,9 +1813,9 @@
     }
 
 
-    /* =========================
-       FACE PROCESSING
-    ========================= */
+    /* ==================================================
+       FACE / EYE DATA
+    ================================================== */
 
     function processFace(
       result
@@ -1545,11 +1825,12 @@
         !result.faceLandmarks
         ||
         result.faceLandmarks.length
-          === 0
+        === 0
       ) {
 
         faceState.textContent =
           "NOT FOUND";
+
 
         faceState.className =
           "bad";
@@ -1582,12 +1863,14 @@
       faceState.textContent =
         "detected";
 
+
       faceState.className =
         "good";
 
 
       const leftIris =
         lm[468];
+
 
       const rightIris =
         lm[473];
@@ -1643,7 +1926,8 @@
 
       const h =
         (
-          leftH +
+          leftH
+          +
           rightH
         )
         /
@@ -1652,37 +1936,84 @@
 
       const v =
         (
-          leftV +
+          leftV
+          +
           rightV
         )
         /
         2;
 
 
+      /*
+        Approximate head position.
+
+        Nose between the two sides
+        of the face.
+      */
+
+      const headX =
+        normalizedBetween(
+
+          lm[1].x,
+
+          lm[234].x,
+
+          lm[454].x
+
+        );
+
+
+      /*
+        Nose vertical position
+        relative to forehead/chin.
+      */
+
+      const headY =
+        normalizedBetween(
+
+          lm[1].y,
+
+          lm[10].y,
+
+          lm[152].y
+
+        );
+
+
       latestEyeData = {
+
         h,
-        v
+        v,
+        headX,
+        headY
+
       };
 
 
       rawHText.textContent =
         h.toFixed(3);
 
+
       rawVText.textContent =
         v.toFixed(3);
+
+
+      updateHeadStatus(
+        headX,
+        headY
+      );
 
 
       if (
         !calibrationMode
         &&
-        calibrationModelX
+        modelX
         &&
-        calibrationModelY
+        modelY
       ) {
 
         updateGazePosition(
-          h,
-          v
+          latestEyeData
         );
 
       }
@@ -1690,17 +2021,115 @@
     }
 
 
-    /* =========================
+    function updateHeadStatus(
+      headX,
+      headY
+    ) {
+
+      if (
+        calibrationHeadX === null
+      ) {
+
+        headState.textContent =
+          "waiting";
+
+        return;
+
+      }
+
+
+      const movement =
+        Math.hypot(
+
+          headX
+          -
+          calibrationHeadX,
+
+          headY
+          -
+          calibrationHeadY
+
+        );
+
+
+      if (
+        movement < 0.05
+      ) {
+
+        headState.textContent =
+          "stable";
+
+
+        headState.className =
+          "good";
+
+      }
+
+      else if (
+        movement < 0.09
+      ) {
+
+        headState.textContent =
+          "slight movement";
+
+
+        headState.className =
+          "warning";
+
+      }
+
+      else {
+
+        headState.textContent =
+          "move back";
+
+
+        headState.className =
+          "bad";
+
+      }
+
+    }
+
+
+    /* ==================================================
        CALIBRATION
-    ========================= */
+    ================================================== */
 
     async function startCalibration() {
 
       calibrationMode =
         true;
 
+
       calibrationSamples =
         [];
+
+
+      gazeX =
+        null;
+
+      gazeY =
+        null;
+
+
+      gameScreen.style.display =
+        "none";
+
+
+      gazeDot.style.display =
+        "none";
+
+
+      cameraPanel.style.display =
+        "none";
+
+
+      completeMessage
+        .classList
+        .remove(
+          "show"
+        );
 
 
       calibrationScreen.style.display =
@@ -1714,33 +2143,65 @@
         i++
       ) {
 
-        await collectCalibrationPoint(
+        await
+        collectCalibrationPoint(
           i
         );
 
       }
 
 
-      calibrationMode =
-        false;
+      /*
+        Establish average head
+        position during calibration.
+      */
+
+      calibrationHeadX =
+        trimmedMean(
+
+          calibrationSamples.map(
+            sample =>
+              sample.headX
+          )
+
+        );
 
 
-      calibrationModelX =
-        fitLinearModel(
+      calibrationHeadY =
+        trimmedMean(
+
+          calibrationSamples.map(
+            sample =>
+              sample.headY
+          )
+
+        );
+
+
+      modelX =
+        fitModel(
           calibrationSamples,
           "screenX"
         );
 
 
-      calibrationModelY =
-        fitLinearModel(
+      modelY =
+        fitModel(
           calibrationSamples,
           "screenY"
         );
 
 
+      calibrationMode =
+        false;
+
+
       calibrationScreen.style.display =
         "none";
+
+
+      cameraPanel.style.display =
+        "block";
 
 
       startGame();
@@ -1753,7 +2214,9 @@
     ) {
 
       const point =
-        calibrationPositions[index];
+        calibrationPositions[
+          index
+        ];
 
 
       calibrationTarget
@@ -1764,16 +2227,23 @@
 
 
       calibrationTarget.style.left =
-        point.x + "%";
+        point.x
+        +
+        "%";
+
 
       calibrationTarget.style.top =
-        point.y + "%";
+        point.y
+        +
+        "%";
 
 
       calibrationProgress.textContent =
         "Point "
         +
-        (index + 1)
+        (
+          index + 1
+        )
         +
         " / "
         +
@@ -1796,8 +2266,17 @@
         );
 
 
-      const hValues = [];
-      const vValues = [];
+      const hValues =
+        [];
+
+      const vValues =
+        [];
+
+      const headXValues =
+        [];
+
+      const headYValues =
+        [];
 
 
       const startTime =
@@ -1820,8 +2299,19 @@
             latestEyeData.h
           );
 
+
           vValues.push(
             latestEyeData.v
+          );
+
+
+          headXValues.push(
+            latestEyeData.headX
+          );
+
+
+          headYValues.push(
+            latestEyeData.headY
           );
 
         }
@@ -1831,7 +2321,7 @@
           resolve =>
             setTimeout(
               resolve,
-              35
+              30
             )
         );
 
@@ -1839,47 +2329,52 @@
 
 
       if (
-        hValues.length < 5
+        hValues.length <
+        10
       ) {
 
         throw new Error(
-          "Not enough eye data during calibration."
+          "Not enough eye data. Please keep your face visible."
         );
 
       }
 
 
-      const screenX =
-        window.innerWidth
-        *
-        point.x
-        /
-        100;
-
-
-      const screenY =
-        window.innerHeight
-        *
-        point.y
-        /
-        100;
-
-
       calibrationSamples.push({
 
         h:
-          average(
+          trimmedMean(
             hValues
           ),
 
         v:
-          average(
+          trimmedMean(
             vValues
           ),
 
-        screenX,
+        headX:
+          trimmedMean(
+            headXValues
+          ),
 
-        screenY
+        headY:
+          trimmedMean(
+            headYValues
+          ),
+
+        screenX:
+          window.innerWidth
+          *
+          point.x
+          /
+          100,
+
+        screenY:
+          window.innerHeight
+          *
+          point.y
+          /
+          100
 
       });
 
@@ -1893,28 +2388,25 @@
     }
 
 
-    /* =========================
-       GAZE POSITION
-    ========================= */
+    /* ==================================================
+       GAZE PREDICTION
+    ================================================== */
 
     function updateGazePosition(
-      h,
-      v
+      data
     ) {
 
       let predictedX =
         predict(
-          calibrationModelX,
-          h,
-          v
+          modelX,
+          data
         );
 
 
       let predictedY =
         predict(
-          calibrationModelY,
-          h,
-          v
+          modelY,
+          data
         );
 
 
@@ -1945,6 +2437,7 @@
         gazeX =
           predictedX;
 
+
         gazeY =
           predictedY;
 
@@ -1952,13 +2445,78 @@
 
       else {
 
+        const distance =
+          Math.hypot(
+
+            predictedX -
+            gazeX,
+
+            predictedY -
+            gazeY
+
+          );
+
+
+        /*
+          Ignore tiny jitter.
+      */
+
+        if (
+          distance <
+          DEAD_ZONE
+        ) {
+
+          return;
+
+        }
+
+
+        /*
+          Adaptive smoothing.
+
+          Small movement:
+          more stable.
+
+          Large movement:
+          faster response.
+        */
+
+        let alpha;
+
+
+        if (
+          distance < 60
+        ) {
+
+          alpha =
+            0.14;
+
+        }
+
+        else if (
+          distance < 180
+        ) {
+
+          alpha =
+            0.28;
+
+        }
+
+        else {
+
+          alpha =
+            0.48;
+
+        }
+
+
         gazeX +=
           (
             predictedX -
             gazeX
           )
           *
-          GAZE_SMOOTHING;
+          alpha;
 
 
         gazeY +=
@@ -1967,7 +2525,7 @@
             gazeY
           )
           *
-          GAZE_SMOOTHING;
+          alpha;
 
       }
 
@@ -1977,10 +2535,15 @@
 
 
       gazeDot.style.left =
-        gazeX + "px";
+        gazeX
+        +
+        "px";
+
 
       gazeDot.style.top =
-        gazeY + "px";
+        gazeY
+        +
+        "px";
 
 
       gazeXText.textContent =
@@ -2008,9 +2571,9 @@
     }
 
 
-    /* =========================
+    /* ==================================================
        GAME
-    ========================= */
+    ================================================== */
 
     function startGame() {
 
@@ -2020,19 +2583,8 @@
 
       buildCheckpoints();
 
-      currentCheckpoint =
-        0;
 
-      completed =
-        false;
-
-      validFrames =
-        0;
-
-
-      updateCurrentTarget();
-
-      updateProgress();
+      restartPath();
 
     }
 
@@ -2094,23 +2646,13 @@
     ) {
 
       const point =
-        checkpoints[index];
+        checkpoints[
+          index
+        ];
 
 
       const rect =
         svg.getBoundingClientRect();
-
-
-      const scaleX =
-        rect.width
-        /
-        1000;
-
-
-      const scaleY =
-        rect.height
-        /
-        560;
 
 
       return {
@@ -2120,14 +2662,22 @@
           +
           point.x
           *
-          scaleX,
+          (
+            rect.width
+            /
+            1000
+          ),
 
         y:
           rect.top
           +
           point.y
           *
-          scaleY
+          (
+            rect.height
+            /
+            560
+          )
 
       };
 
@@ -2141,7 +2691,9 @@
         >=
         checkpoints.length
       ) {
+
         return;
+
       }
 
 
@@ -2187,7 +2739,9 @@
         ||
         gazeY === null
       ) {
+
         return;
+
       }
 
 
@@ -2216,8 +2770,7 @@
 
 
       if (
-        distance
-        <
+        distance <
         PATH_TOLERANCE
       ) {
 
@@ -2226,6 +2779,7 @@
 
         trackingState.textContent =
           "ON PATH";
+
 
         trackingState.className =
           "good";
@@ -2238,6 +2792,7 @@
         ) {
 
           currentCheckpoint++;
+
 
           validFrames =
             0;
@@ -2274,6 +2829,7 @@
         trackingState.textContent =
           "OFF PATH";
 
+
         trackingState.className =
           "bad";
 
@@ -2296,15 +2852,63 @@
 
       progressPath.style
         .strokeDashoffset =
-          1 - progress;
+          1 -
+          progress;
 
 
       progressText.textContent =
         Math.round(
-          progress * 100
+          progress
+          *
+          100
         )
         +
         "%";
+
+    }
+
+
+    function restartPath() {
+
+      currentCheckpoint =
+        0;
+
+
+      validFrames =
+        0;
+
+
+      completed =
+        false;
+
+
+      currentTarget.style.display =
+        "block";
+
+
+      completeMessage
+        .classList
+        .remove(
+          "show"
+        );
+
+
+      trackingState.textContent =
+        "waiting";
+
+
+      trackingState.className =
+        "";
+
+
+      progressPath.style
+        .strokeDashoffset =
+          1;
+
+
+      updateCurrentTarget();
+
+      updateProgress();
 
     }
 
@@ -2331,11 +2935,13 @@
       trackingState.textContent =
         "COMPLETE";
 
+
       trackingState.className =
         "good";
 
 
-      completeMessage.classList
+      completeMessage
+        .classList
         .add(
           "show"
         );
@@ -2343,9 +2949,41 @@
     }
 
 
-    /* =========================
+    /* ==================================================
+       BUTTONS
+    ================================================== */
+
+    recalibrateButton
+      .addEventListener(
+
+        "click",
+
+        function() {
+
+          startCalibration();
+
+        }
+
+      );
+
+
+    restartButton
+      .addEventListener(
+
+        "click",
+
+        function() {
+
+          restartPath();
+
+        }
+
+      );
+
+
+    /* ==================================================
        CLEANUP
-    ========================= */
+    ================================================== */
 
     window.addEventListener(
       "beforeunload",
@@ -2362,8 +3000,10 @@
           video.srcObject
             .getTracks()
             .forEach(
+
               track =>
                 track.stop()
+
             );
 
         }
