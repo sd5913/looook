@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>Looook — Vertical Gaze Diagnostic</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Looook — Personalized Vertical Calibration</title>
 
   <style>
     * {
@@ -18,10 +16,8 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-
       background: #111;
       color: white;
-
       font-family: Arial, Helvetica, sans-serif;
     }
 
@@ -29,43 +25,40 @@
       font: inherit;
     }
 
-    /* ==============================
+    /* =========================
        START
-    ============================== */
+    ========================= */
 
     #start-screen {
       position: fixed;
       inset: 0;
+      z-index: 1000;
 
       display: flex;
       align-items: center;
       justify-content: center;
 
       background: #111;
-
-      z-index: 1000;
     }
 
     .start-panel {
-      width: min(660px, 88vw);
+      width: min(650px, 88vw);
       text-align: center;
     }
 
     h1 {
       margin: 0 0 18px;
-      font-size: 54px;
+      font-size: 56px;
     }
 
     .intro {
       color: #aaa;
-
       line-height: 1.7;
       font-size: 17px;
     }
 
     #start-button {
-      margin-top: 26px;
-
+      margin-top: 28px;
       padding: 17px 34px;
 
       border: 0;
@@ -75,7 +68,6 @@
       color: #111;
 
       font-size: 18px;
-
       cursor: pointer;
     }
 
@@ -85,23 +77,20 @@
 
     #error-message {
       display: none;
-
-      margin-top: 18px;
-
+      margin-top: 20px;
       color: #ff7070;
     }
 
-    /* ==============================
+    /* =========================
        CAMERA
-    ============================== */
+    ========================= */
 
     #camera-panel {
       position: fixed;
-
       top: 18px;
       left: 18px;
 
-      width: 260px;
+      width: 250px;
 
       border-radius: 14px;
       overflow: hidden;
@@ -109,25 +98,20 @@
       background: #222;
 
       display: none;
-
-      z-index: 500;
+      z-index: 600;
     }
 
     #video-wrapper {
       position: relative;
-
-      width: 260px;
+      width: 250px;
       aspect-ratio: 4 / 3;
-
       overflow: hidden;
     }
 
     #webcam {
       width: 100%;
       height: 100%;
-
       object-fit: cover;
-
       transform: scaleX(-1);
     }
 
@@ -139,58 +123,84 @@
       height: 100%;
 
       pointer-events: none;
-
       transform: scaleX(-1);
     }
 
     #camera-status {
-      padding: 9px 12px;
-
+      padding: 8px 11px;
       color: #aaa;
-
       font-size: 12px;
     }
 
-    /* ==============================
-       BASELINE
-    ============================== */
+    /* =========================
+       TITLE
+    ========================= */
 
-    #baseline-stage {
+    #instruction {
       position: fixed;
-      inset: 0;
-
-      display: none;
-
-      align-items: center;
-      justify-content: center;
-    }
-
-    #baseline-label {
-      position: absolute;
-
-      top: calc(50% + 110px);
+      top: 26px;
       left: 50%;
 
       transform: translateX(-50%);
 
-      color: #aaa;
-
       text-align: center;
-      line-height: 1.6;
+
+      display: none;
+      z-index: 400;
     }
 
-    .baseline-target {
-      position: relative;
+    #instruction strong {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 23px;
+    }
+
+    #instruction span {
+      color: #999;
+      font-size: 14px;
+    }
+
+    /* =========================
+       CALIBRATION
+    ========================= */
+
+    #calibration-stage {
+      position: fixed;
+      inset: 0;
+
+      display: none;
+      z-index: 100;
+    }
+
+    #calibration-target {
+      position: absolute;
+      left: 50%;
 
       width: 170px;
       height: 170px;
 
+      transform: translate(-50%, -50%);
+
       display: flex;
       align-items: center;
       justify-content: center;
+
+      transition: top 0.45s ease;
     }
 
-    .baseline-target svg {
+    #calibration-target.TOP {
+      top: 25%;
+    }
+
+    #calibration-target.CENTER {
+      top: 50%;
+    }
+
+    #calibration-target.BOTTOM {
+      top: 75%;
+    }
+
+    #calibration-target svg {
       position: absolute;
 
       width: 170px;
@@ -201,12 +211,11 @@
 
     .ring-bg {
       fill: none;
-
-      stroke: rgba(255, 255, 255, 0.14);
+      stroke: rgba(255,255,255,0.14);
       stroke-width: 8;
     }
 
-    #baseline-ring {
+    #calibration-ring {
       fill: none;
 
       stroke: #00e891;
@@ -217,177 +226,209 @@
       stroke-dashoffset: 427.26;
     }
 
-    .baseline-dot {
+    #calibration-dot {
       width: 68px;
       height: 68px;
 
       border-radius: 50%;
-
       background: #ff4d4d;
     }
 
-    .baseline-target.active .baseline-dot {
+    #calibration-target.active #calibration-dot {
       background: #00e891;
     }
 
-    /* ==============================
-       DIAGNOSTIC STAGE
-    ============================== */
+    #calibration-name {
+      position: absolute;
+      top: 190px;
+      left: 50%;
 
-    #diagnostic-stage {
+      transform: translateX(-50%);
+
+      font-weight: bold;
+      letter-spacing: 2px;
+      color: white;
+    }
+
+    /* =========================
+       READY
+    ========================= */
+
+    #countdown {
+      position: fixed;
+      inset: 0;
+
+      display: none;
+      align-items: center;
+      justify-content: center;
+
+      background: rgba(17,17,17,0.78);
+
+      z-index: 900;
+      pointer-events: none;
+    }
+
+    #countdown-box {
+      text-align: center;
+    }
+
+    #countdown-main {
+      font-size: 90px;
+      font-weight: bold;
+    }
+
+    #countdown-main.go {
+      color: #00e891;
+    }
+
+    #countdown-sub {
+      margin-top: 15px;
+
+      color: #bbb;
+      font-size: 18px;
+    }
+
+    /* =========================
+       TEST
+    ========================= */
+
+    #test-stage {
       position: fixed;
       inset: 0;
 
       display: none;
     }
 
-    #instruction {
+    #test-column {
       position: absolute;
 
-      top: 26px;
-      left: 50%;
+      top: 115px;
+      bottom: 75px;
 
-      transform: translateX(-50%);
-
-      text-align: center;
-
-      z-index: 100;
-    }
-
-    #instruction strong {
-      display: block;
-
-      margin-bottom: 5px;
-
-      font-size: 24px;
-    }
-
-    #instruction span {
-      color: #999;
-
-      font-size: 14px;
-    }
-
-    /* ==============================
-       THREE VISUAL TARGETS
-    ============================== */
-
-    #target-column {
-      position: absolute;
-
-      top: 120px;
-      bottom: 80px;
-
-      left: 31%;
+      left: 38%;
       width: 260px;
 
       display: flex;
       flex-direction: column;
 
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
     }
 
     .test-target {
-      width: 105px;
-      height: 105px;
+      position: relative;
+
+      width: 125px;
+      height: 125px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .test-target svg {
+      position: absolute;
+
+      width: 125px;
+      height: 125px;
+
+      transform: rotate(-90deg);
+    }
+
+    .test-ring-bg {
+      fill: none;
+
+      stroke: rgba(255,255,255,0.14);
+      stroke-width: 7;
+    }
+
+    .test-ring {
+      fill: none;
+
+      stroke: white;
+      stroke-width: 7;
+      stroke-linecap: round;
+
+      stroke-dasharray: 314.16;
+      stroke-dashoffset: 314.16;
+    }
+
+    .test-dot {
+      width: 54px;
+      height: 54px;
 
       border-radius: 50%;
 
       background: #ff4d4d;
 
-      border: 8px solid rgba(255, 255, 255, 0.14);
+      transition:
+        background 0.12s ease,
+        transform 0.12s ease;
+    }
 
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .test-target.active .test-dot {
+      background: #00e891;
+      transform: scale(1.08);
+    }
+
+    .test-target.active .test-ring {
+      stroke: #00e891;
+    }
+
+    .test-target.completed .test-dot {
+      background: #00e891;
+    }
+
+    .test-target.completed .test-ring {
+      stroke: #00e891;
+      stroke-dashoffset: 0 !important;
+    }
+
+    .test-label {
+      position: absolute;
+      top: 140px;
+      left: 50%;
+
+      transform: translateX(-50%);
 
       font-weight: bold;
-      font-size: 13px;
-
       letter-spacing: 1px;
 
+      color: #777;
+    }
+
+    .test-target.active .test-label,
+    .test-target.completed .test-label {
       color: white;
     }
 
-    /* ==============================
-       DIAGNOSTIC PANEL
-    ============================== */
+    /* =========================
+       DEBUG
+    ========================= */
 
-    #diagnostic-panel {
-      position: absolute;
+    #debug-panel {
+      position: fixed;
 
-      top: 115px;
-      right: 5%;
-      bottom: 55px;
+      right: 18px;
+      bottom: 18px;
 
-      width: min(500px, 38vw);
+      width: 320px;
 
-      padding: 22px;
+      padding: 16px;
 
-      border-radius: 18px;
+      border-radius: 14px;
 
-      background: rgba(0, 0, 0, 0.78);
+      background: rgba(0,0,0,0.78);
 
-      overflow: auto;
-    }
-
-    #diagnostic-panel h2 {
-      margin: 0 0 5px;
-
-      font-size: 21px;
-    }
-
-    #diagnostic-panel .subtitle {
-      margin-bottom: 20px;
-
-      color: #888;
-
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-    .metric {
-      margin-bottom: 20px;
-
-      padding-bottom: 18px;
-
-      border-bottom:
-        1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .metric:last-child {
-      border-bottom: 0;
-    }
-
-    .metric-title {
-      margin-bottom: 8px;
-
-      color: white;
-
-      font-size: 15px;
-      font-weight: bold;
-    }
-
-    .metric-row {
-      display: flex;
-      justify-content: space-between;
-
-      margin: 5px 0;
-
-      color: #aaa;
+      display: none;
 
       font-family: monospace;
       font-size: 13px;
-    }
+      line-height: 1.65;
 
-    .metric-value {
-      color: #00e891;
-    }
+      color: #aaa;
 
-    .delta {
-      font-size: 21px;
-      font-weight: bold;
+      z-index: 700;
     }
 
     .good {
@@ -398,78 +439,25 @@
       color: #ff7070;
     }
 
-    /* ==============================
-       SIMPLE BAR
-    ============================== */
-
-    .bar-track {
-      position: relative;
-
-      height: 12px;
-
-      margin-top: 9px;
-
-      border-radius: 999px;
-
-      background:
-        rgba(255, 255, 255, 0.1);
-    }
-
-    .bar-center {
-      position: absolute;
-
-      top: -4px;
-      bottom: -4px;
-
-      left: 50%;
-
-      width: 2px;
-
-      background:
-        rgba(255, 255, 255, 0.4);
-    }
-
-    .bar-dot {
-      position: absolute;
-
-      top: 50%;
-
-      width: 14px;
-      height: 14px;
-
-      border-radius: 50%;
-
-      background: #00e891;
-
-      transform:
-        translate(-50%, -50%);
-
-      left: 50%;
-    }
-
-    /* ==============================
-       STATUS
-    ============================== */
-
-    #status {
+    #complete-message {
       position: fixed;
 
-      left: 18px;
-      bottom: 18px;
+      bottom: 30px;
+      left: 50%;
 
-      padding: 12px 15px;
+      transform: translateX(-50%);
 
-      border-radius: 10px;
+      color: #00e891;
 
-      background:
-        rgba(0, 0, 0, 0.75);
+      font-size: 20px;
+      font-weight: bold;
 
-      color: #aaa;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
 
-      font-family: monospace;
-      font-size: 12px;
-
-      display: none;
+    #complete-message.show {
+      opacity: 1;
     }
   </style>
 </head>
@@ -483,27 +471,23 @@
 
     <div class="start-panel">
 
-      <h1>
-        Looook
-      </h1>
+      <h1>Looook</h1>
 
       <p class="intro">
-        Vertical Gaze Diagnostic
+        Personalized Vertical Gaze Calibration
         <br><br>
 
-        First, establish your neutral center gaze.
+        Look at TOP, CENTER and BOTTOM when instructed.
         <br>
 
-        Then look at TOP, CENTER and BOTTOM
-        while keeping your head still.
+        The system will learn your own vertical gaze pattern.
         <br>
 
-        We will compare three different
-        vertical gaze measurements.
+        After calibration, complete the three targets using gaze only.
       </p>
 
       <button id="start-button">
-        START VERTICAL TEST
+        START CALIBRATION
       </button>
 
       <div id="error-message"></div>
@@ -537,13 +521,28 @@
   </div>
 
 
-  <!-- BASELINE -->
+  <!-- INSTRUCTION -->
 
-  <div id="baseline-stage">
+  <div id="instruction">
+
+    <strong id="instruction-title">
+      Calibration
+    </strong>
+
+    <span id="instruction-subtitle">
+      Keep your head still and move only your eyes.
+    </span>
+
+  </div>
+
+
+  <!-- CALIBRATION -->
+
+  <div id="calibration-stage">
 
     <div
-      class="baseline-target"
-      id="baseline-target">
+      id="calibration-target"
+      class="TOP">
 
       <svg viewBox="0 0 170 170">
 
@@ -555,7 +554,7 @@
         </circle>
 
         <circle
-          id="baseline-ring"
+          id="calibration-ring"
           cx="85"
           cy="85"
           r="68">
@@ -563,231 +562,139 @@
 
       </svg>
 
-      <div class="baseline-dot"></div>
+      <div id="calibration-dot"></div>
 
-    </div>
-
-    <div id="baseline-label">
-
-      <strong>
-        NEUTRAL GAZE
-      </strong>
-
-      <br>
-
-      Look directly at the center point.
-
-    </div>
-
-  </div>
-
-
-  <!-- DIAGNOSTIC -->
-
-  <div id="diagnostic-stage">
-
-    <div id="instruction">
-
-      <strong>
-        Vertical Gaze Diagnostic
-      </strong>
-
-      <span>
-        Keep your head still.
-        Look at TOP, CENTER and BOTTOM
-        and compare the live values.
-      </span>
-
-    </div>
-
-
-    <!-- TARGETS -->
-
-    <div id="target-column">
-
-      <div class="test-target">
+      <div id="calibration-name">
         TOP
       </div>
 
-      <div class="test-target">
-        CENTER
+    </div>
+
+  </div>
+
+
+  <!-- READY -->
+
+  <div id="countdown">
+
+    <div id="countdown-box">
+
+      <div id="countdown-main">
+        READY
       </div>
 
-      <div class="test-target">
-        BOTTOM
+      <div id="countdown-sub">
+        Get ready to test your gaze
       </div>
 
     </div>
 
-
-    <!-- METRICS -->
-
-    <div id="diagnostic-panel">
-
-      <h2>
-        Live Vertical Features
-      </h2>
-
-      <div class="subtitle">
-        Watch the Δ values while looking
-        TOP / CENTER / BOTTOM.
-        We want one method to produce
-        clearly separated values.
-      </div>
+  </div>
 
 
-      <!-- METHOD A -->
+  <!-- TEST -->
 
-      <div class="metric">
+  <div id="test-stage">
 
-        <div class="metric-title">
-          Method A — Single eyelid points
-        </div>
+    <div id="test-column">
 
-        <div class="metric-row">
-          <span>Current</span>
-          <span
-            class="metric-value"
-            id="single-current">
-            --
-          </span>
-        </div>
+      <!-- TOP -->
 
-        <div class="metric-row">
-          <span>Baseline</span>
-          <span id="single-baseline">
-            --
-          </span>
-        </div>
+      <div
+        class="test-target"
+        id="test-TOP">
 
-        <div class="metric-row">
-          <span>Δ Single</span>
-          <span
-            class="metric-value delta"
-            id="single-delta">
-            --
-          </span>
-        </div>
+        <svg viewBox="0 0 125 125">
 
-        <div class="bar-track">
-          <div class="bar-center"></div>
-          <div
-            class="bar-dot"
-            id="single-bar">
-          </div>
+          <circle
+            class="test-ring-bg"
+            cx="62.5"
+            cy="62.5"
+            r="50">
+          </circle>
+
+          <circle
+            class="test-ring"
+            id="ring-TOP"
+            cx="62.5"
+            cy="62.5"
+            r="50">
+          </circle>
+
+        </svg>
+
+        <div class="test-dot"></div>
+
+        <div class="test-label">
+          TOP
         </div>
 
       </div>
 
 
-      <!-- METHOD B -->
+      <!-- CENTER -->
 
-      <div class="metric">
+      <div
+        class="test-target"
+        id="test-CENTER">
 
-        <div class="metric-title">
-          Method B — Multi-eyelid average
-        </div>
+        <svg viewBox="0 0 125 125">
 
-        <div class="metric-row">
-          <span>Current</span>
-          <span
-            class="metric-value"
-            id="multi-current">
-            --
-          </span>
-        </div>
+          <circle
+            class="test-ring-bg"
+            cx="62.5"
+            cy="62.5"
+            r="50">
+          </circle>
 
-        <div class="metric-row">
-          <span>Baseline</span>
-          <span id="multi-baseline">
-            --
-          </span>
-        </div>
+          <circle
+            class="test-ring"
+            id="ring-CENTER"
+            cx="62.5"
+            cy="62.5"
+            r="50">
+          </circle>
 
-        <div class="metric-row">
-          <span>Δ Multi</span>
-          <span
-            class="metric-value delta"
-            id="multi-delta">
-            --
-          </span>
-        </div>
+        </svg>
 
-        <div class="bar-track">
-          <div class="bar-center"></div>
-          <div
-            class="bar-dot"
-            id="multi-bar">
-          </div>
+        <div class="test-dot"></div>
+
+        <div class="test-label">
+          CENTER
         </div>
 
       </div>
 
 
-      <!-- METHOD C -->
+      <!-- BOTTOM -->
 
-      <div class="metric">
+      <div
+        class="test-target"
+        id="test-BOTTOM">
 
-        <div class="metric-title">
-          Method C — Iris offset / eye width
-        </div>
+        <svg viewBox="0 0 125 125">
 
-        <div class="metric-row">
-          <span>Current</span>
-          <span
-            class="metric-value"
-            id="offset-current">
-            --
-          </span>
-        </div>
+          <circle
+            class="test-ring-bg"
+            cx="62.5"
+            cy="62.5"
+            r="50">
+          </circle>
 
-        <div class="metric-row">
-          <span>Baseline</span>
-          <span id="offset-baseline">
-            --
-          </span>
-        </div>
+          <circle
+            class="test-ring"
+            id="ring-BOTTOM"
+            cx="62.5"
+            cy="62.5"
+            r="50">
+          </circle>
 
-        <div class="metric-row">
-          <span>Δ Offset</span>
-          <span
-            class="metric-value delta"
-            id="offset-delta">
-            --
-          </span>
-        </div>
+        </svg>
 
-        <div class="bar-track">
-          <div class="bar-center"></div>
-          <div
-            class="bar-dot"
-            id="offset-bar">
-          </div>
-        </div>
+        <div class="test-dot"></div>
 
-      </div>
-
-
-      <!-- RAW EYES -->
-
-      <div class="metric">
-
-        <div class="metric-title">
-          Left / Right eye comparison
-        </div>
-
-        <div class="metric-row">
-          <span>Left multi</span>
-          <span id="left-multi">
-            --
-          </span>
-        </div>
-
-        <div class="metric-row">
-          <span>Right multi</span>
-          <span id="right-multi">
-            --
-          </span>
+        <div class="test-label">
+          BOTTOM
         </div>
 
       </div>
@@ -797,16 +704,58 @@
   </div>
 
 
-  <div id="status">
+  <!-- DEBUG -->
 
-    <div id="face-status">
+  <div id="debug-panel">
+
+    <div id="face-state">
       Face: waiting
     </div>
 
-    <div id="head-status">
+    <div id="head-state">
       Head: waiting
     </div>
 
+    <div>
+      Current V:
+      <span id="current-v">--</span>
+    </div>
+
+    <br>
+
+    <div>
+      TOP prototype:
+      <span id="top-prototype">--</span>
+    </div>
+
+    <div>
+      CENTER prototype:
+      <span id="center-prototype">--</span>
+    </div>
+
+    <div>
+      BOTTOM prototype:
+      <span id="bottom-prototype">--</span>
+    </div>
+
+    <br>
+
+    <div id="zone-state">
+      Zone: waiting
+    </div>
+
+    <div>
+      Completed:
+      <span id="completed-state">
+        0 / 3
+      </span>
+    </div>
+
+  </div>
+
+
+  <div id="complete-message">
+    PERSONALIZED VERTICAL GAZE TEST COMPLETED ✓
   </div>
 
 
@@ -819,16 +768,28 @@
       "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.2/+esm";
 
 
-    /* ==========================================
+    /* =========================
        SETTINGS
-    ========================================== */
+    ========================= */
 
-    const BASELINE_DWELL_MS =
-      2200;
+    const CALIBRATION_DWELL_MS =
+      2800;
 
 
-    const RING_LENGTH =
+    const TEST_DWELL_MS =
+      5000;
+
+
+    const GAZE_LEAVE_GRACE_MS =
+      500;
+
+
+    const CALIBRATION_RING_LENGTH =
       427.26;
+
+
+    const TEST_RING_LENGTH =
+      314.16;
 
 
     const SMOOTHING =
@@ -842,218 +803,129 @@
       0.66;
 
 
+    const H_CENTER_MIN =
+      0.38;
+
+    const H_CENTER_MAX =
+      0.62;
+
+
     const MIN_EYE_OPENNESS =
       0.10;
 
 
-    /* ==========================================
-       LANDMARK GROUPS
-    ========================================== */
+    const ZONE_STABLE_MS =
+      140;
 
-    /*
-      These are multiple eyelid contour points.
 
-      We average them instead of relying
-      on only one upper + one lower point.
-    */
-
-    const LEFT_UPPER = [
-      157,
-      158,
-      159,
-      160,
-      161
-    ];
-
-    const LEFT_LOWER = [
-      144,
-      145,
-      153,
-      154,
-      155
+    const CALIBRATION_ORDER = [
+      "TOP",
+      "CENTER",
+      "BOTTOM"
     ];
 
 
-    const RIGHT_UPPER = [
-      384,
-      385,
-      386,
-      387,
-      388
-    ];
-
-    const RIGHT_LOWER = [
-      373,
-      374,
-      380,
-      381,
-      382
-    ];
-
-
-    /* ==========================================
+    /* =========================
        ELEMENTS
-    ========================================== */
+    ========================= */
 
     const startScreen =
-      document.getElementById(
-        "start-screen"
-      );
+      document.getElementById("start-screen");
 
     const startButton =
-      document.getElementById(
-        "start-button"
-      );
+      document.getElementById("start-button");
 
     const errorMessage =
-      document.getElementById(
-        "error-message"
-      );
+      document.getElementById("error-message");
 
 
     const cameraPanel =
-      document.getElementById(
-        "camera-panel"
-      );
+      document.getElementById("camera-panel");
 
     const cameraStatus =
-      document.getElementById(
-        "camera-status"
-      );
-
+      document.getElementById("camera-status");
 
     const video =
-      document.getElementById(
-        "webcam"
-      );
+      document.getElementById("webcam");
 
     const canvas =
-      document.getElementById(
-        "overlay"
-      );
+      document.getElementById("overlay");
 
     const ctx =
-      canvas.getContext(
-        "2d"
-      );
+      canvas.getContext("2d");
 
 
-    const baselineStage =
-      document.getElementById(
-        "baseline-stage"
-      );
+    const instruction =
+      document.getElementById("instruction");
 
-    const baselineTarget =
-      document.getElementById(
-        "baseline-target"
-      );
+    const instructionTitle =
+      document.getElementById("instruction-title");
 
-    const baselineRing =
-      document.getElementById(
-        "baseline-ring"
-      );
+    const instructionSubtitle =
+      document.getElementById("instruction-subtitle");
 
 
-    const diagnosticStage =
-      document.getElementById(
-        "diagnostic-stage"
-      );
+    const calibrationStage =
+      document.getElementById("calibration-stage");
+
+    const calibrationTarget =
+      document.getElementById("calibration-target");
+
+    const calibrationRing =
+      document.getElementById("calibration-ring");
+
+    const calibrationName =
+      document.getElementById("calibration-name");
 
 
-    const status =
-      document.getElementById(
-        "status"
-      );
+    const countdown =
+      document.getElementById("countdown");
 
-    const faceStatus =
-      document.getElementById(
-        "face-status"
-      );
+    const countdownMain =
+      document.getElementById("countdown-main");
 
-    const headStatus =
-      document.getElementById(
-        "head-status"
-      );
+    const countdownSub =
+      document.getElementById("countdown-sub");
 
 
-    const singleCurrent =
-      document.getElementById(
-        "single-current"
-      );
-
-    const singleBaselineText =
-      document.getElementById(
-        "single-baseline"
-      );
-
-    const singleDelta =
-      document.getElementById(
-        "single-delta"
-      );
+    const testStage =
+      document.getElementById("test-stage");
 
 
-    const multiCurrent =
-      document.getElementById(
-        "multi-current"
-      );
+    const debugPanel =
+      document.getElementById("debug-panel");
 
-    const multiBaselineText =
-      document.getElementById(
-        "multi-baseline"
-      );
+    const faceState =
+      document.getElementById("face-state");
 
-    const multiDelta =
-      document.getElementById(
-        "multi-delta"
-      );
+    const headState =
+      document.getElementById("head-state");
 
+    const currentVText =
+      document.getElementById("current-v");
 
-    const offsetCurrent =
-      document.getElementById(
-        "offset-current"
-      );
+    const topPrototypeText =
+      document.getElementById("top-prototype");
 
-    const offsetBaselineText =
-      document.getElementById(
-        "offset-baseline"
-      );
+    const centerPrototypeText =
+      document.getElementById("center-prototype");
 
-    const offsetDelta =
-      document.getElementById(
-        "offset-delta"
-      );
+    const bottomPrototypeText =
+      document.getElementById("bottom-prototype");
 
+    const zoneState =
+      document.getElementById("zone-state");
 
-    const leftMultiText =
-      document.getElementById(
-        "left-multi"
-      );
+    const completedState =
+      document.getElementById("completed-state");
 
-    const rightMultiText =
-      document.getElementById(
-        "right-multi"
-      );
+    const completeMessage =
+      document.getElementById("complete-message");
 
 
-    const singleBar =
-      document.getElementById(
-        "single-bar"
-      );
-
-    const multiBar =
-      document.getElementById(
-        "multi-bar"
-      );
-
-    const offsetBar =
-      document.getElementById(
-        "offset-bar"
-      );
-
-
-    /* ==========================================
+    /* =========================
        STATE
-    ========================================== */
+    ========================= */
 
     let faceLandmarker =
       null;
@@ -1068,54 +940,88 @@
 
 
     let stage =
-      "baseline";
+      "calibration";
 
 
-    let baselineProgress =
+    let calibrationIndex =
       0;
 
 
-    const singleSamples =
+    let calibrationProgress =
+      0;
+
+
+    let calibrationLocked =
+      false;
+
+
+    let calibrationLastValid =
+      0;
+
+
+    let calibrationSamples =
       [];
 
-    const multiSamples =
-      [];
 
-    const offsetSamples =
-      [];
+    const prototypes = {
+      TOP: null,
+      CENTER: null,
+      BOTTOM: null
+    };
 
 
-    let singleBaseline =
-      null;
-
-    let multiBaseline =
-      null;
-
-    let offsetBaseline =
+    let smoothVertical =
       null;
 
 
-    let smoothSingle =
-      null;
-
-    let smoothMulti =
-      null;
-
-    let smoothOffset =
-      null;
+    let currentZone =
+      "NONE";
 
 
-    /* ==========================================
+    let candidateZone =
+      "NONE";
+
+
+    let candidateSince =
+      0;
+
+
+    let testInputEnabled =
+      false;
+
+
+    const testProgress = {
+      TOP: 0,
+      CENTER: 0,
+      BOTTOM: 0
+    };
+
+
+    const testCompleted = {
+      TOP: false,
+      CENTER: false,
+      BOTTOM: false
+    };
+
+
+    const lastValidTime = {
+      TOP: 0,
+      CENTER: 0,
+      BOTTOM: 0
+    };
+
+
+    /* =========================
        START
-    ========================================== */
+    ========================= */
 
     startButton.addEventListener(
       "click",
-      startTest
+      startApp
     );
 
 
-    async function startTest() {
+    async function startApp() {
 
       startButton.disabled =
         true;
@@ -1123,80 +1029,74 @@
       startButton.textContent =
         "LOADING...";
 
-      errorMessage.style.display =
-        "none";
-
 
       try {
 
         const vision =
-          await FilesetResolver
-            .forVisionTasks(
+          await FilesetResolver.forVisionTasks(
 
-              "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.2/wasm"
+            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.2/wasm"
 
-            );
+          );
 
 
         faceLandmarker =
-          await FaceLandmarker
-            .createFromOptions(
+          await FaceLandmarker.createFromOptions(
 
-              vision,
+            vision,
 
-              {
+            {
 
-                baseOptions: {
+              baseOptions: {
 
-                  modelAssetPath:
+                modelAssetPath:
 
-                    "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
-
-                },
-
-                runningMode:
-                  "VIDEO",
-
-                numFaces:
-                  1,
-
-                minFaceDetectionConfidence:
-                  0.5,
-
-                minFacePresenceConfidence:
-                  0.5,
-
-                minTrackingConfidence:
-                  0.5
-
-              }
-
-            );
-
-
-        const stream =
-          await navigator.mediaDevices
-            .getUserMedia({
-
-              video: {
-
-                width: {
-                  ideal: 640
-                },
-
-                height: {
-                  ideal: 480
-                },
-
-                facingMode:
-                  "user"
+                  "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
 
               },
 
-              audio:
-                false
+              runningMode:
+                "VIDEO",
 
-            });
+              numFaces:
+                1,
+
+              minFaceDetectionConfidence:
+                0.5,
+
+              minFacePresenceConfidence:
+                0.5,
+
+              minTrackingConfidence:
+                0.5
+
+            }
+
+          );
+
+
+        const stream =
+          await navigator.mediaDevices.getUserMedia({
+
+            video: {
+
+              width: {
+                ideal: 640
+              },
+
+              height: {
+                ideal: 480
+              },
+
+              facingMode:
+                "user"
+
+            },
+
+            audio:
+              false
+
+          });
 
 
         video.srcObject =
@@ -1204,28 +1104,6 @@
 
 
         await video.play();
-
-
-        await new Promise(
-          resolve => {
-
-            if (
-              video.readyState >= 2
-            ) {
-
-              resolve();
-
-            }
-
-            else {
-
-              video.onloadeddata =
-                resolve;
-
-            }
-
-          }
-        );
 
 
         canvas.width =
@@ -1241,15 +1119,23 @@
         cameraPanel.style.display =
           "block";
 
-        baselineStage.style.display =
-          "flex";
+        instruction.style.display =
+          "block";
 
-        status.style.display =
+        calibrationStage.style.display =
+          "block";
+
+        debugPanel.style.display =
           "block";
 
 
         cameraStatus.textContent =
           "Camera ready — tracking iris";
+
+
+        showCalibrationTarget(
+          "TOP"
+        );
 
 
         lastFrameTime =
@@ -1264,9 +1150,7 @@
 
       catch (error) {
 
-        console.error(
-          error
-        );
+        console.error(error);
 
 
         startButton.disabled =
@@ -1287,13 +1171,11 @@
     }
 
 
-    /* ==========================================
-       MAIN LOOP
-    ========================================== */
+    /* =========================
+       LOOP
+    ========================= */
 
-    function renderLoop(
-      now
-    ) {
+    function renderLoop(now) {
 
       if (
         video.currentTime !==
@@ -1306,11 +1188,8 @@
 
         const result =
           faceLandmarker.detectForVideo(
-
             video,
-
             now
-
           );
 
 
@@ -1329,9 +1208,9 @@
     }
 
 
-    /* ==========================================
-       PROCESS FACE
-    ========================================== */
+    /* =========================
+       FACE DATA
+    ========================= */
 
     function processFace(
       result,
@@ -1340,12 +1219,8 @@
 
       const dt =
         Math.min(
-
-          now -
-          lastFrameTime,
-
+          now - lastFrameTime,
           100
-
         );
 
 
@@ -1354,29 +1229,35 @@
 
 
       ctx.clearRect(
-
         0,
         0,
-
         canvas.width,
         canvas.height
-
       );
 
 
       if (
-
         !result.faceLandmarks ||
-
         result.faceLandmarks.length === 0
-
       ) {
 
-        faceStatus.textContent =
+        faceState.textContent =
           "Face: NOT FOUND";
 
-        faceStatus.className =
+        faceState.className =
           "bad";
+
+
+        if (
+          stage === "test"
+        ) {
+
+          updateTestProgress(
+            "NONE",
+            dt
+          );
+
+        }
 
         return;
 
@@ -1387,10 +1268,10 @@
         result.faceLandmarks[0];
 
 
-      faceStatus.textContent =
+      faceState.textContent =
         "Face: detected";
 
-      faceStatus.className =
+      faceState.className =
         "good";
 
 
@@ -1401,9 +1282,119 @@
         lm[473];
 
 
-      /* ======================================
+      /* -------------------------
+         VERTICAL METHOD A
+      ------------------------- */
+
+      const leftVertical =
+        normalizedBetween(
+
+          leftIris.y,
+
+          lm[159].y,
+
+          lm[145].y
+
+        );
+
+
+      const rightVertical =
+        normalizedBetween(
+
+          rightIris.y,
+
+          lm[386].y,
+
+          lm[374].y
+
+        );
+
+
+      const rawVertical =
+        (
+          leftVertical +
+          rightVertical
+        ) / 2;
+
+
+      if (
+        smoothVertical === null
+      ) {
+
+        smoothVertical =
+          rawVertical;
+
+      }
+
+      else {
+
+        smoothVertical +=
+
+          (
+            rawVertical -
+            smoothVertical
+          )
+
+          *
+
+          SMOOTHING;
+
+      }
+
+
+      currentVText.textContent =
+        smoothVertical.toFixed(4);
+
+
+      /* -------------------------
+         HORIZONTAL CENTER CHECK
+      ------------------------- */
+
+      const leftH =
+        normalizedBetween(
+
+          leftIris.x,
+
+          lm[33].x,
+
+          lm[133].x
+
+        );
+
+
+      const rightH =
+        normalizedBetween(
+
+          rightIris.x,
+
+          lm[263].x,
+
+          lm[362].x
+
+        );
+
+
+      const horizontal =
+        (
+          leftH +
+          rightH
+        ) / 2;
+
+
+      const horizontalCentered =
+
+        horizontal >=
+        H_CENTER_MIN
+
+        &&
+
+        horizontal <=
+        H_CENTER_MAX;
+
+
+      /* -------------------------
          HEAD CHECK
-      ====================================== */
+      ------------------------- */
 
       const headRatio =
         normalizedBetween(
@@ -1432,28 +1423,28 @@
         headFrontal
       ) {
 
-        headStatus.textContent =
+        headState.textContent =
           "Head: frontal";
 
-        headStatus.className =
+        headState.className =
           "good";
 
       }
 
       else {
 
-        headStatus.textContent =
+        headState.textContent =
           "Head: turn detected";
 
-        headStatus.className =
+        headState.className =
           "bad";
 
       }
 
 
-      /* ======================================
+      /* -------------------------
          EYE OPENNESS
-      ====================================== */
+      ------------------------- */
 
       const leftOpen =
         eyeOpenness(
@@ -1488,209 +1479,25 @@
         MIN_EYE_OPENNESS;
 
 
-      /* ======================================
-         METHOD A
-         OLD SINGLE-POINT FEATURE
-      ====================================== */
-
-      const leftSingle =
-        normalizedBetween(
-
-          leftIris.y,
-
-          lm[159].y,
-
-          lm[145].y
-
-        );
-
-
-      const rightSingle =
-        normalizedBetween(
-
-          rightIris.y,
-
-          lm[386].y,
-
-          lm[374].y
-
-        );
-
-
-      const rawSingle =
-        (
-          leftSingle +
-          rightSingle
-        ) / 2;
-
-
-      /* ======================================
-         METHOD B
-         MULTI-LID AVERAGE
-      ====================================== */
-
-      const leftUpperY =
-        averageLandmarkY(
-          lm,
-          LEFT_UPPER
-        );
-
-
-      const leftLowerY =
-        averageLandmarkY(
-          lm,
-          LEFT_LOWER
-        );
-
-
-      const rightUpperY =
-        averageLandmarkY(
-          lm,
-          RIGHT_UPPER
-        );
-
-
-      const rightLowerY =
-        averageLandmarkY(
-          lm,
-          RIGHT_LOWER
-        );
-
-
-      const leftMulti =
-        normalizedBetween(
-
-          leftIris.y,
-
-          leftUpperY,
-
-          leftLowerY
-
-        );
-
-
-      const rightMulti =
-        normalizedBetween(
-
-          rightIris.y,
-
-          rightUpperY,
-
-          rightLowerY
-
-        );
-
-
-      const rawMulti =
-        (
-          leftMulti +
-          rightMulti
-        ) / 2;
-
-
-      /* ======================================
-         METHOD C
-         IRIS OFFSET FROM EYE MIDLINE
-         NORMALIZED BY EYE WIDTH
-      ====================================== */
-
-      const leftEyeMidY =
-        (
-          leftUpperY +
-          leftLowerY
-        ) / 2;
-
-
-      const rightEyeMidY =
-        (
-          rightUpperY +
-          rightLowerY
-        ) / 2;
-
-
-      const leftEyeWidth =
-        distance2D(
-          lm[33],
-          lm[133]
-        );
-
-
-      const rightEyeWidth =
-        distance2D(
-          lm[263],
-          lm[362]
-        );
-
-
-      const leftOffset =
-        (
-          leftIris.y -
-          leftEyeMidY
-        )
-        /
-        leftEyeWidth;
-
-
-      const rightOffset =
-        (
-          rightIris.y -
-          rightEyeMidY
-        )
-        /
-        rightEyeWidth;
-
-
-      const rawOffset =
-        (
-          leftOffset +
-          rightOffset
-        ) / 2;
-
-
-      /* ======================================
-         SMOOTH FEATURES
-      ====================================== */
-
-      smoothSingle =
-        smoothValue(
-          smoothSingle,
-          rawSingle
-        );
-
-
-      smoothMulti =
-        smoothValue(
-          smoothMulti,
-          rawMulti
-        );
-
-
-      smoothOffset =
-        smoothValue(
-          smoothOffset,
-          rawOffset
-        );
-
-
-      /* ======================================
-         BASELINE
-      ====================================== */
+      /* -------------------------
+         STAGE
+      ------------------------- */
 
       if (
-        stage === "baseline"
+        stage === "calibration"
       ) {
 
-        processBaseline(
+        processCalibration(
 
-          smoothSingle,
+          smoothVertical,
 
-          smoothMulti,
-
-          smoothOffset,
+          horizontalCentered,
 
           headFrontal,
 
           eyesOpen,
+
+          now,
 
           dt
 
@@ -1698,28 +1505,29 @@
 
       }
 
-      else {
 
-        updateDiagnostic(
+      if (
+        stage === "test"
+      ) {
 
-          smoothSingle,
+        processTest(
 
-          smoothMulti,
+          smoothVertical,
 
-          smoothOffset,
+          horizontalCentered,
 
-          leftMulti,
+          headFrontal,
 
-          rightMulti
+          eyesOpen,
+
+          now,
+
+          dt
 
         );
 
       }
 
-
-      /* ======================================
-         DRAW IRIS CENTERS
-      ====================================== */
 
       drawPoint(
         leftIris,
@@ -1735,28 +1543,82 @@
     }
 
 
-    /* ==========================================
-       BASELINE
-    ========================================== */
+    /* =========================
+       CALIBRATION
+    ========================= */
 
-    function processBaseline(
-      single,
-      multi,
-      offset,
+    function showCalibrationTarget(
+      key
+    ) {
+
+      calibrationTarget.className =
+        key;
+
+
+      calibrationName.textContent =
+        key;
+
+
+      instructionTitle.textContent =
+        "Look at " + key;
+
+
+      instructionSubtitle.textContent =
+        "Keep your head still and hold your gaze on the target.";
+
+
+      calibrationRing.style.strokeDashoffset =
+        CALIBRATION_RING_LENGTH;
+
+
+      calibrationProgress =
+        0;
+
+
+      calibrationSamples =
+        [];
+
+
+      calibrationLastValid =
+        performance.now();
+
+    }
+
+
+    function processCalibration(
+      vertical,
+      horizontalCentered,
       headFrontal,
       eyesOpen,
+      now,
       dt
     ) {
 
-      /*
-        Broad check only.
+      if (
+        calibrationLocked
+      ) {
 
-        User still needs to face camera
-        and keep eyes open.
+        return;
+
+      }
+
+
+      /*
+        During vertical calibration,
+        we cannot already classify vertical gaze.
+
+        Instead:
+        - target position is known
+        - head must be frontal
+        - eyes must be open
+        - horizontal gaze must remain centered
+
+        Vertical feature is then recorded.
       */
 
       const valid =
 
+        horizontalCentered &&
         headFrontal &&
         eyesOpen;
 
@@ -1765,253 +1627,690 @@
         valid
       ) {
 
-        baselineTarget
-          .classList.add(
-            "active"
-          );
+        calibrationTarget.classList.add(
+          "active"
+        );
 
 
-        baselineProgress +=
+        calibrationLastValid =
+          now;
+
+
+        calibrationProgress +=
 
           dt /
-          BASELINE_DWELL_MS;
+          CALIBRATION_DWELL_MS;
 
 
-        singleSamples.push(
-          single
-        );
-
-        multiSamples.push(
-          multi
-        );
-
-        offsetSamples.push(
-          offset
+        calibrationSamples.push(
+          vertical
         );
 
       }
 
       else {
 
-        baselineTarget
-          .classList.remove(
-            "active"
-          );
+        calibrationTarget.classList.remove(
+          "active"
+        );
+
+
+        if (
+          now -
+          calibrationLastValid >
+          GAZE_LEAVE_GRACE_MS
+        ) {
+
+          calibrationProgress =
+            0;
+
+
+          calibrationSamples =
+            [];
+
+        }
 
       }
 
 
-      baselineProgress =
+      calibrationProgress =
         clamp(
-
-          baselineProgress,
-
+          calibrationProgress,
           0,
           1
-
         );
 
 
-      baselineRing.style
-        .strokeDashoffset =
+      calibrationRing.style.strokeDashoffset =
 
-        RING_LENGTH *
+        CALIBRATION_RING_LENGTH *
+
         (
           1 -
-          baselineProgress
+          calibrationProgress
         );
 
 
       if (
-        baselineProgress >= 1
+        calibrationProgress >= 1
       ) {
 
-        singleBaseline =
-          average(
-            singleSamples
-          );
-
-
-        multiBaseline =
-          average(
-            multiSamples
-          );
-
-
-        offsetBaseline =
-          average(
-            offsetSamples
-          );
-
-
-        singleBaselineText.textContent =
-          singleBaseline.toFixed(4);
-
-
-        multiBaselineText.textContent =
-          multiBaseline.toFixed(4);
-
-
-        offsetBaselineText.textContent =
-          offsetBaseline.toFixed(4);
-
-
-        startDiagnostic();
+        finishCalibrationPoint();
 
       }
 
     }
 
 
-    /* ==========================================
-       START DIAGNOSTIC
-    ========================================== */
+    function finishCalibrationPoint() {
 
-    function startDiagnostic() {
-
-      stage =
-        "diagnostic";
+      calibrationLocked =
+        true;
 
 
-      baselineStage.style.display =
-        "none";
-
-
-      diagnosticStage.style.display =
-        "block";
-
-    }
-
-
-    /* ==========================================
-       LIVE DIAGNOSTIC
-    ========================================== */
-
-    function updateDiagnostic(
-      single,
-      multi,
-      offset,
-      leftMulti,
-      rightMulti
-    ) {
-
-      const dSingle =
-        single -
-        singleBaseline;
-
-
-      const dMulti =
-        multi -
-        multiBaseline;
-
-
-      const dOffset =
-        offset -
-        offsetBaseline;
-
-
-      singleCurrent.textContent =
-        single.toFixed(4);
-
-
-      singleDelta.textContent =
-        signed(
-          dSingle
-        );
-
-
-      multiCurrent.textContent =
-        multi.toFixed(4);
-
-
-      multiDelta.textContent =
-        signed(
-          dMulti
-        );
-
-
-      offsetCurrent.textContent =
-        offset.toFixed(4);
-
-
-      offsetDelta.textContent =
-        signed(
-          dOffset
-        );
-
-
-      leftMultiText.textContent =
-        leftMulti.toFixed(4);
-
-
-      rightMultiText.textContent =
-        rightMulti.toFixed(4);
+      const key =
+        CALIBRATION_ORDER[
+          calibrationIndex
+        ];
 
 
       /*
-        Visual bars.
-
-        Clamp display to ±0.10.
+        Median is more resistant
+        to occasional noisy frames.
       */
 
-      updateBar(
-        singleBar,
-        dSingle,
-        0.10
-      );
+      prototypes[key] =
+        median(
+          calibrationSamples
+        );
 
 
-      updateBar(
-        multiBar,
-        dMulti,
-        0.10
-      );
+      updatePrototypeDisplay();
 
 
-      updateBar(
-        offsetBar,
-        dOffset,
-        0.05
-      );
+      calibrationIndex +=
+        1;
 
-    }
-
-
-    /* ==========================================
-       HELPERS
-    ========================================== */
-
-    function smoothValue(
-      previous,
-      current
-    ) {
 
       if (
-        previous === null
+        calibrationIndex >=
+        CALIBRATION_ORDER.length
       ) {
 
-        return current;
+        setTimeout(
+          startTestCountdown,
+          700
+        );
+
+        return;
 
       }
 
 
-      return (
+      setTimeout(
+        function () {
 
-        previous +
+          calibrationLocked =
+            false;
 
-        (
-          current -
-          previous
-        )
 
-        *
+          showCalibrationTarget(
 
-        SMOOTHING
+            CALIBRATION_ORDER[
+              calibrationIndex
+            ]
 
+          );
+
+        },
+        700
       );
 
     }
 
+
+    function updatePrototypeDisplay() {
+
+      if (
+        prototypes.TOP !== null
+      ) {
+
+        topPrototypeText.textContent =
+          prototypes.TOP.toFixed(4);
+
+      }
+
+
+      if (
+        prototypes.CENTER !== null
+      ) {
+
+        centerPrototypeText.textContent =
+          prototypes.CENTER.toFixed(4);
+
+      }
+
+
+      if (
+        prototypes.BOTTOM !== null
+      ) {
+
+        bottomPrototypeText.textContent =
+          prototypes.BOTTOM.toFixed(4);
+
+      }
+
+    }
+
+
+    /* =========================
+       READY
+    ========================= */
+
+    function startTestCountdown() {
+
+      stage =
+        "transition";
+
+
+      calibrationStage.style.display =
+        "none";
+
+
+      instruction.style.display =
+        "none";
+
+
+      countdown.style.display =
+        "flex";
+
+
+      countdownMain.textContent =
+        "READY";
+
+
+      countdownMain.classList.remove(
+        "go"
+      );
+
+
+      countdownSub.textContent =
+        "3";
+
+
+      setTimeout(
+        function () {
+
+          countdownSub.textContent =
+            "2";
+
+        },
+        1000
+      );
+
+
+      setTimeout(
+        function () {
+
+          countdownSub.textContent =
+            "1";
+
+        },
+        2000
+      );
+
+
+      setTimeout(
+        function () {
+
+          countdownMain.textContent =
+            "GO!";
+
+
+          countdownMain.classList.add(
+            "go"
+          );
+
+
+          countdownSub.textContent =
+            "Choose TOP, CENTER or BOTTOM";
+
+
+          setTimeout(
+            startTest,
+            700
+          );
+
+        },
+        3000
+      );
+
+    }
+
+
+    /* =========================
+       TEST
+    ========================= */
+
+    function startTest() {
+
+      countdown.style.display =
+        "none";
+
+
+      testStage.style.display =
+        "block";
+
+
+      instruction.style.display =
+        "block";
+
+
+      instructionTitle.textContent =
+        "Choose any target";
+
+
+      instructionSubtitle.textContent =
+        "Hold your gaze continuously for 5 seconds.";
+
+
+      stage =
+        "test";
+
+
+      testInputEnabled =
+        true;
+
+
+      candidateZone =
+        "NONE";
+
+
+      currentZone =
+        "NONE";
+
+
+      candidateSince =
+        performance.now();
+
+    }
+
+
+    function processTest(
+      vertical,
+      horizontalCentered,
+      headFrontal,
+      eyesOpen,
+      now,
+      dt
+    ) {
+
+      if (
+        !testInputEnabled
+      ) {
+
+        return;
+
+      }
+
+
+      const valid =
+
+        horizontalCentered &&
+        headFrontal &&
+        eyesOpen;
+
+
+      if (
+        !valid
+      ) {
+
+        updateStableZone(
+          "NONE",
+          now
+        );
+
+
+        updateTestProgress(
+          "NONE",
+          dt
+        );
+
+
+        return;
+
+      }
+
+
+      /*
+        Personalized classification:
+
+        Which prototype is the current
+        vertical feature closest to?
+      */
+
+      const distances = {
+
+        TOP:
+          Math.abs(
+            vertical -
+            prototypes.TOP
+          ),
+
+        CENTER:
+          Math.abs(
+            vertical -
+            prototypes.CENTER
+          ),
+
+        BOTTOM:
+          Math.abs(
+            vertical -
+            prototypes.BOTTOM
+          )
+
+      };
+
+
+      let nearest =
+        "TOP";
+
+
+      if (
+        distances.CENTER <
+        distances[nearest]
+      ) {
+
+        nearest =
+          "CENTER";
+
+      }
+
+
+      if (
+        distances.BOTTOM <
+        distances[nearest]
+      ) {
+
+        nearest =
+          "BOTTOM";
+
+      }
+
+
+      updateStableZone(
+        nearest,
+        now
+      );
+
+
+      updateTestProgress(
+        currentZone,
+        dt
+      );
+
+    }
+
+
+    function updateStableZone(
+      zone,
+      now
+    ) {
+
+      if (
+        zone !==
+        candidateZone
+      ) {
+
+        candidateZone =
+          zone;
+
+
+        candidateSince =
+          now;
+
+
+        return;
+
+      }
+
+
+      if (
+        now -
+        candidateSince >=
+        ZONE_STABLE_MS
+      ) {
+
+        currentZone =
+          candidateZone;
+
+      }
+
+
+      zoneState.textContent =
+        "Zone: " +
+        currentZone;
+
+
+      if (
+        currentZone === "NONE"
+      ) {
+
+        zoneState.className =
+          "bad";
+
+      }
+
+      else {
+
+        zoneState.className =
+          "good";
+
+      }
+
+    }
+
+
+    /* =========================
+       TEST PROGRESS
+    ========================= */
+
+    function updateTestProgress(
+      zone,
+      dt
+    ) {
+
+      const keys = [
+        "TOP",
+        "CENTER",
+        "BOTTOM"
+      ];
+
+
+      keys.forEach(
+        key => {
+
+          document
+            .getElementById(
+              "test-" + key
+            )
+            .classList.remove(
+              "active"
+            );
+
+        }
+      );
+
+
+      const now =
+        performance.now();
+
+
+      if (
+        keys.includes(zone) &&
+        !testCompleted[zone]
+      ) {
+
+        document
+          .getElementById(
+            "test-" + zone
+          )
+          .classList.add(
+            "active"
+          );
+
+
+        testProgress[zone] +=
+
+          dt /
+          TEST_DWELL_MS;
+
+
+        lastValidTime[zone] =
+          now;
+
+      }
+
+
+      keys.forEach(
+        key => {
+
+          if (
+            testCompleted[key]
+          ) {
+
+            return;
+
+          }
+
+
+          if (
+
+            zone !== key &&
+
+            testProgress[key] > 0 &&
+
+            now -
+            lastValidTime[key] >
+            GAZE_LEAVE_GRACE_MS
+
+          ) {
+
+            testProgress[key] =
+              0;
+
+          }
+
+        }
+      );
+
+
+      keys.forEach(
+        key => {
+
+          updateTestRing(
+            key
+          );
+
+        }
+      );
+
+
+      const completedCount =
+
+        keys.filter(
+          key =>
+            testCompleted[key]
+        ).length;
+
+
+      completedState.textContent =
+
+        completedCount +
+        " / 3";
+
+
+      if (
+        completedCount === 3
+      ) {
+
+        completeMessage.classList.add(
+          "show"
+        );
+
+
+        instructionTitle.textContent =
+          "Calibration validated";
+
+
+        instructionSubtitle.textContent =
+          "TOP, CENTER and BOTTOM were detected using your personalized gaze data.";
+
+      }
+
+    }
+
+
+    function updateTestRing(
+      key
+    ) {
+
+      testProgress[key] =
+        clamp(
+          testProgress[key],
+          0,
+          1
+        );
+
+
+      const ring =
+        document.getElementById(
+          "ring-" + key
+        );
+
+
+      ring.style.strokeDashoffset =
+
+        TEST_RING_LENGTH *
+
+        (
+          1 -
+          testProgress[key]
+        );
+
+
+      if (
+        testProgress[key] >= 1 &&
+        !testCompleted[key]
+      ) {
+
+        testCompleted[key] =
+          true;
+
+
+        const target =
+          document.getElementById(
+            "test-" + key
+          );
+
+
+        target.classList.remove(
+          "active"
+        );
+
+
+        target.classList.add(
+          "completed"
+        );
+
+      }
+
+    }
+
+
+    /* =========================
+       HELPERS
+    ========================= */
 
     function normalizedBetween(
       value,
@@ -2039,8 +2338,7 @@
 
 
       if (
-        range <
-        0.00001
+        range < 0.00001
       ) {
 
         return 0.5;
@@ -2049,61 +2347,15 @@
 
 
       return (
+
         value -
         min
+
       )
+
       /
+
       range;
-
-    }
-
-
-    function averageLandmarkY(
-      landmarks,
-      indices
-    ) {
-
-      let total =
-        0;
-
-
-      indices.forEach(
-        index => {
-
-          total +=
-            landmarks[index].y;
-
-        }
-      );
-
-
-      return (
-        total /
-        indices.length
-      );
-
-    }
-
-
-    function distance2D(
-      a,
-      b
-    ) {
-
-      const dx =
-        a.x -
-        b.x;
-
-
-      const dy =
-        a.y -
-        b.y;
-
-
-      return Math.sqrt(
-        dx * dx +
-        dy * dy
-      );
 
     }
 
@@ -2130,8 +2382,7 @@
 
 
       if (
-        horizontal <
-        0.00001
+        horizontal < 0.00001
       ) {
 
         return 0;
@@ -2166,16 +2417,11 @@
 
 
       ctx.arc(
-
         x,
         y,
-
         5,
-
         0,
-
         Math.PI * 2
-
       );
 
 
@@ -2188,7 +2434,7 @@
     }
 
 
-    function average(
+    function median(
       values
     ) {
 
@@ -2201,79 +2447,34 @@
       }
 
 
-      return (
-
-        values.reduce(
-
-          (
-            sum,
-            value
-          ) =>
-            sum +
-            value,
-
-          0
-
-        )
-
-        /
-
-        values.length
-
-      );
-
-    }
+      const sorted =
+        [...values].sort(
+          (a, b) =>
+            a - b
+        );
 
 
-    function signed(
-      value
-    ) {
+      const middle =
+        Math.floor(
+          sorted.length / 2
+        );
+
 
       if (
-        value >= 0
+        sorted.length % 2 === 0
       ) {
 
         return (
-          "+" +
-          value.toFixed(4)
-        );
+
+          sorted[middle - 1] +
+          sorted[middle]
+
+        ) / 2;
 
       }
 
 
-      return value.toFixed(4);
-
-    }
-
-
-    function updateBar(
-      element,
-      value,
-      maxMagnitude
-    ) {
-
-      const normalized =
-
-        clamp(
-
-          value /
-          maxMagnitude,
-
-          -1,
-          1
-
-        );
-
-
-      const percent =
-
-        50 +
-        normalized *
-        45;
-
-
-      element.style.left =
-        percent + "%";
+      return sorted[middle];
 
     }
 
@@ -2285,14 +2486,11 @@
     ) {
 
       return Math.max(
-
         min,
-
         Math.min(
           max,
           value
         )
-
       );
 
     }
@@ -2300,5 +2498,4 @@
   </script>
 
 </body>
-
 </html>
