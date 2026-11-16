@@ -1,0 +1,2828 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Looook — 9 Gaze Targets</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #111;
+      color: white;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    /* ==============================
+       START
+    ============================== */
+
+    #start-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      background: #111;
+    }
+
+    .start-panel {
+      width: min(650px, 88vw);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 18px;
+      font-size: 56px;
+    }
+
+    .intro {
+      color: #aaa;
+      line-height: 1.7;
+      font-size: 17px;
+    }
+
+    #start-button {
+      margin-top: 28px;
+      padding: 17px 34px;
+
+      border: 0;
+      border-radius: 999px;
+
+      background: white;
+      color: #111;
+
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    #start-button:disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
+
+    #error-message {
+      display: none;
+      margin-top: 20px;
+      color: #ff7070;
+    }
+
+    /* ==============================
+       CAMERA
+    ============================== */
+
+    #camera-panel {
+      position: fixed;
+
+      top: 18px;
+      left: 18px;
+
+      width: 240px;
+
+      border-radius: 14px;
+      overflow: hidden;
+
+      background: #222;
+
+      display: none;
+      z-index: 500;
+    }
+
+    #video-wrapper {
+      position: relative;
+      width: 240px;
+      aspect-ratio: 4 / 3;
+      overflow: hidden;
+    }
+
+    #webcam {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+
+    #overlay {
+      position: absolute;
+      inset: 0;
+
+      width: 100%;
+      height: 100%;
+
+      pointer-events: none;
+      transform: scaleX(-1);
+    }
+
+    #camera-status {
+      padding: 8px 11px;
+      color: #aaa;
+      font-size: 12px;
+    }
+
+    /* ==============================
+       INSTRUCTION
+    ============================== */
+
+    #instruction {
+      position: fixed;
+
+      top: 25px;
+      left: 50%;
+
+      transform: translateX(-50%);
+
+      text-align: center;
+
+      display: none;
+      z-index: 300;
+    }
+
+    #instruction strong {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 22px;
+    }
+
+    #instruction span {
+      color: #999;
+      font-size: 14px;
+    }
+
+    /* ==============================
+       BASELINE
+    ============================== */
+
+    #baseline-stage {
+      position: fixed;
+      inset: 0;
+
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ==============================
+       9-TARGET GRID
+    ============================== */
+
+    #target-stage {
+      position: fixed;
+
+      top: 120px;
+      bottom: 70px;
+      left: 8%;
+      right: 8%;
+
+      display: none;
+
+      grid-template-columns:
+        repeat(3, 1fr);
+
+      grid-template-rows:
+        repeat(3, 1fr);
+
+      align-items: center;
+      justify-items: center;
+
+      gap: 14px 40px;
+    }
+
+    /* ==============================
+       TARGET
+    ============================== */
+
+    .target {
+      position: relative;
+
+      width: 130px;
+      height: 130px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .target svg {
+      position: absolute;
+
+      width: 130px;
+      height: 130px;
+
+      transform: rotate(-90deg);
+    }
+
+    .ring-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.14);
+      stroke-width: 7;
+    }
+
+    .ring-progress {
+      fill: none;
+
+      stroke: white;
+      stroke-width: 7;
+      stroke-linecap: round;
+
+      stroke-dasharray: 326.73;
+      stroke-dashoffset: 326.73;
+
+      transition:
+        stroke 0.12s ease;
+    }
+
+    .target-dot {
+      width: 54px;
+      height: 54px;
+
+      border-radius: 50%;
+
+      background: #ff4d4d;
+
+      transition:
+        background 0.12s ease,
+        transform 0.12s ease;
+    }
+
+    .target.active .target-dot {
+      background: #00e891;
+      transform: scale(1.09);
+    }
+
+    .target.active .ring-progress {
+      stroke: #00e891;
+    }
+
+    .target.completed .target-dot {
+      background: #00e891;
+    }
+
+    .target.completed .ring-progress {
+      stroke: #00e891;
+      stroke-dashoffset: 0 !important;
+    }
+
+    .target-label {
+      position: absolute;
+
+      top: 145px;
+      left: 50%;
+
+      transform: translateX(-50%);
+
+      white-space: nowrap;
+
+      color: #666;
+
+      font-size: 12px;
+      font-weight: bold;
+
+      letter-spacing: 1px;
+
+      transition:
+        color 0.12s ease;
+    }
+
+    .target.active .target-label,
+    .target.completed .target-label {
+      color: white;
+    }
+
+    /* ==============================
+       READY COUNTDOWN
+    ============================== */
+
+    #countdown-overlay {
+      position: fixed;
+      inset: 0;
+
+      z-index: 900;
+
+      display: none;
+
+      align-items: center;
+      justify-content: center;
+
+      background:
+        rgba(17, 17, 17, 0.72);
+
+      pointer-events: none;
+    }
+
+    #countdown-content {
+      text-align: center;
+    }
+
+    #countdown-main {
+      font-size: 80px;
+      font-weight: bold;
+    }
+
+    #countdown-sub {
+      margin-top: 18px;
+
+      color: #bbb;
+
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    #countdown-main.go {
+      color: #00e891;
+    }
+
+    /* ==============================
+       DEBUG
+    ============================== */
+
+    #debug-panel {
+      position: fixed;
+
+      right: 15px;
+      bottom: 15px;
+
+      width: 285px;
+
+      padding: 13px 15px;
+
+      border-radius: 12px;
+
+      background:
+        rgba(0, 0, 0, 0.78);
+
+      color: #aaa;
+
+      font-family: monospace;
+      font-size: 12px;
+      line-height: 1.55;
+
+      display: none;
+      z-index: 600;
+    }
+
+    .good {
+      color: #00e891;
+    }
+
+    .bad {
+      color: #ff7070;
+    }
+
+    /* ==============================
+       COMPLETE
+    ============================== */
+
+    #complete-message {
+      position: fixed;
+
+      bottom: 30px;
+      left: 50%;
+
+      transform: translateX(-50%);
+
+      color: #00e891;
+
+      font-size: 20px;
+      font-weight: bold;
+
+      opacity: 0;
+
+      transition:
+        opacity 0.3s ease;
+
+      z-index: 700;
+    }
+
+    #complete-message.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+
+
+<body>
+
+  <!-- START -->
+
+  <div id="start-screen">
+
+    <div class="start-panel">
+
+      <h1>
+        Looook
+      </h1>
+
+      <p class="intro">
+
+        First, establish your neutral gaze.
+
+        <br>
+
+        Then complete all 9 screen regions
+        using only your eyes.
+
+        <br>
+
+        Choose them in any order.
+
+        <br>
+
+        Hold your gaze continuously
+        for 5 seconds to complete a target.
+
+      </p>
+
+      <button id="start-button">
+        START 9-TARGET TEST
+      </button>
+
+      <div id="error-message"></div>
+
+    </div>
+
+  </div>
+
+
+  <!-- CAMERA -->
+
+  <div id="camera-panel">
+
+    <div id="video-wrapper">
+
+      <video
+        id="webcam"
+        autoplay
+        muted
+        playsinline>
+      </video>
+
+      <canvas id="overlay"></canvas>
+
+    </div>
+
+    <div id="camera-status">
+      Loading...
+    </div>
+
+  </div>
+
+
+  <!-- INSTRUCTION -->
+
+  <div id="instruction">
+
+    <strong id="instruction-title">
+      Calibrating neutral gaze
+    </strong>
+
+    <span id="instruction-subtitle">
+      Look directly at the center point.
+    </span>
+
+  </div>
+
+
+  <!-- BASELINE -->
+
+  <div id="baseline-stage">
+
+    <div
+      class="target"
+      id="baseline-target">
+
+      <svg viewBox="0 0 130 130">
+
+        <circle
+          class="ring-bg"
+          cx="65"
+          cy="65"
+          r="52">
+        </circle>
+
+        <circle
+          class="ring-progress"
+          id="baseline-ring"
+          cx="65"
+          cy="65"
+          r="52">
+        </circle>
+
+      </svg>
+
+      <div class="target-dot"></div>
+
+      <div class="target-label">
+        CALIBRATE
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- 9 TARGETS -->
+
+  <div id="target-stage">
+
+    <!-- TOP LEFT -->
+
+    <div
+      class="target"
+      id="TOP_LEFT">
+
+      <svg viewBox="0 0 130 130">
+
+        <circle
+          class="ring-bg"
+          cx="65"
+          cy="65"
+          r="52">
+        </circle>
+
+        <circle
+          class="ring-progress"
+          id="TOP_LEFT_RING"
+          cx="65"
+          cy="65"
+          r="52">
+        </circle>
+
+      </svg>
+
+      <div class="target-dot"></div>
+
+      <div class="target-label">
+        TOP LEFT
+      </div>
+
+    </div>
+
+
+    <!-- TOP CENTER -->
+
+    <div
+      class="target"
+      id="TOP_CENTER">
+
+      <svg viewBox="0 0 130 130">
+
+        <circle
+          class="ring-bg"
+          cx="65"
+          cy="65"
+          r="52">
+        </circle>
+
+        <circle
+          class="ring-progress"
+          id="TOP_CENTER_RING"
+          cx="65"
+          cy="65"
+          r="52">
+        </circle>
+
+      </svg>
+
+      <div class="target-dot"></div>
+
+      <div class="target-label">
+        TOP
+      </div>
+
+    </div>
+
+
+    <!-- TOP RIGHT -->
+
+    <div
+      class="target"
+      id="TOP_RIGHT">
+
+      <svg viewBox="0 0 130 130">
+
+        <circle
+          class="ring-bg"
+          cx="65"
+          cy="65"
+          r="52">
+        </circle>
+
+        <circle
+          class="ring-progress"
+          id="TOP_RIGHT_RING"
+          cx="65"
+          cy="65"
+          r="52">
+        </circle>
+
+      </svg>
+
+      <div class="target-dot"></div>
+
+      <div class="target-label">
+        TOP RIGHT
+      </div>
+
+    </div>
+
+
+    <!-- MID LEFT -->
+
+    <div
+      class="target"
+      id="MID_LEFT">
+
+      <svg viewBox="0 0 130 130">
+
+        <circle
+          class="ring-bg"
+          cx="65"
+          cy="65"
+          r="52">
+        </circle>
+
+        <circle
+          class="ring-progress"
+          id="MID_LEFT_RING"
+          cx="65"
+          cy="65"
+          r="52">
+        </circle>
+
+      </svg>
+
+      <div class="target-dot"></div>
+
+      <div class="target-label">
+        LEFT
+      </div>
+
+    </div>
+
+
+    <!-- CENTER -->
+
+    <div
+      class="target"
+      id="CENTER">
+
+      <svg viewBox="0 0 130 130">
+
+        <circle
+          class="ring-bg"
+          cx="65"
+          cy="65"
+          r="52">
+        </circle>
+
+        <circle
+          class="ring-progress"
+          id="CENTER_RING"
+          cx="65"
+          cy="65"
+          r="52">
+        </circle>
+
+      </svg>
+
+      <div class="target-dot"></div>
+
+      <div class="target-label">
+        CENTER
+      </div>
+
+    </div>
+
+
+    <!-- MID RIGHT -->
+
+    <div
+      class="target"
+      id="MID_RIGHT">
+
+      <svg viewBox="0 0 130 130">
+
+        <circle
+          class="ring-bg"
+          cx="65"
+          cy="65"
+          r="52">
+        </circle>
+
+        <circle
+          class="ring-progress"
+          id="MID_RIGHT_RING"
+          cx="65"
+          cy="65"
+          r="52">
+        </circle>
+
+      </svg>
+
+      <div class="target-dot"></div>
+
+      <div class="target-label">
+        RIGHT
+      </div>
+
+    </div>
+
+
+    <!-- BOTTOM LEFT -->
+
+    <div
+      class="target"
+      id="BOTTOM_LEFT">
+
+      <svg viewBox="0 0 130 130">
+
+        <circle
+          class="ring-bg"
+          cx="65"
+          cy="65"
+          r="52">
+        </circle>
+
+        <circle
+          class="ring-progress"
+          id="BOTTOM_LEFT_RING"
+          cx="65"
+          cy="65"
+          r="52">
+        </circle>
+
+      </svg>
+
+      <div class="target-dot"></div>
+
+      <div class="target-label">
+        BOTTOM LEFT
+      </div>
+
+    </div>
+
+
+    <!-- BOTTOM CENTER -->
+
+    <div
+      class="target"
+      id="BOTTOM_CENTER">
+
+      <svg viewBox="0 0 130 130">
+
+        <circle
+          class="ring-bg"
+          cx="65"
+          cy="65"
+          r="52">
+        </circle>
+
+        <circle
+          class="ring-progress"
+          id="BOTTOM_CENTER_RING"
+          cx="65"
+          cy="65"
+          r="52">
+        </circle>
+
+      </svg>
+
+      <div class="target-dot"></div>
+
+      <div class="target-label">
+        BOTTOM
+      </div>
+
+    </div>
+
+
+    <!-- BOTTOM RIGHT -->
+
+    <div
+      class="target"
+      id="BOTTOM_RIGHT">
+
+      <svg viewBox="0 0 130 130">
+
+        <circle
+          class="ring-bg"
+          cx="65"
+          cy="65"
+          r="52">
+        </circle>
+
+        <circle
+          class="ring-progress"
+          id="BOTTOM_RIGHT_RING"
+          cx="65"
+          cy="65"
+          r="52">
+        </circle>
+
+      </svg>
+
+      <div class="target-dot"></div>
+
+      <div class="target-label">
+        BOTTOM RIGHT
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- READY -->
+
+  <div id="countdown-overlay">
+
+    <div id="countdown-content">
+
+      <div id="countdown-main">
+        READY
+      </div>
+
+      <div id="countdown-sub">
+        3
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- DEBUG -->
+
+  <div id="debug-panel">
+
+    <div id="face-state">
+      Face: waiting
+    </div>
+
+    <div id="head-state">
+      Head: waiting
+    </div>
+
+    <div>
+      Horizontal:
+      <span id="horizontal-value">--</span>
+    </div>
+
+    <div>
+      Vertical:
+      <span id="vertical-value">--</span>
+    </div>
+
+    <div>
+      Baseline H:
+      <span id="baseline-h-value">--</span>
+    </div>
+
+    <div>
+      Baseline V:
+      <span id="baseline-v-value">--</span>
+    </div>
+
+    <div>
+      Delta H:
+      <span id="delta-h-value">--</span>
+    </div>
+
+    <div>
+      Delta V:
+      <span id="delta-v-value">--</span>
+    </div>
+
+    <div id="zone-state">
+      Zone: waiting
+    </div>
+
+    <div>
+      Completed:
+      <span id="completed-value">
+        0 / 9
+      </span>
+    </div>
+
+  </div>
+
+
+  <div id="complete-message">
+    ALL 9 GAZE TARGETS COMPLETED ✓
+  </div>
+
+
+  <script type="module">
+
+    import {
+      FaceLandmarker,
+      FilesetResolver
+    } from
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.2/+esm";
+
+
+    /* ==========================================
+       SETTINGS
+    ========================================== */
+
+    const BASELINE_DWELL_MS =
+      1800;
+
+
+    /*
+      User requested:
+      5 seconds continuous gaze.
+    */
+
+    const TARGET_DWELL_MS =
+      5000;
+
+
+    /*
+      Natural blink tolerance.
+
+      Gaze can leave for up to
+      500ms before progress resets.
+    */
+
+    const GAZE_LEAVE_GRACE_MS =
+      500;
+
+
+    /*
+      Ring:
+      r = 52
+      circumference ≈ 326.73
+    */
+
+    const RING_LENGTH =
+      326.73;
+
+
+    /*
+      Horizontal eye threshold.
+
+      Previous 3-target test
+      already worked around 0.04.
+    */
+
+    const H_THRESHOLD =
+      0.040;
+
+
+    /*
+      Vertical eye threshold.
+
+      We start slightly wider
+      because vertical iris movement
+      is often noisier.
+    */
+
+    const V_THRESHOLD =
+      0.045;
+
+
+    const HEAD_MIN =
+      0.34;
+
+    const HEAD_MAX =
+      0.66;
+
+
+    const MIN_EYE_OPENNESS =
+      0.10;
+
+
+    /*
+      Smoothing:
+      smaller = smoother,
+      but slower.
+    */
+
+    const SMOOTHING =
+      0.20;
+
+
+    /*
+      Prevent instant zone jumping.
+    */
+
+    const ZONE_STABLE_MS =
+      140;
+
+
+    /* ==========================================
+       TARGET KEYS
+    ========================================== */
+
+    const TARGET_KEYS = [
+
+      "TOP_LEFT",
+      "TOP_CENTER",
+      "TOP_RIGHT",
+
+      "MID_LEFT",
+      "CENTER",
+      "MID_RIGHT",
+
+      "BOTTOM_LEFT",
+      "BOTTOM_CENTER",
+      "BOTTOM_RIGHT"
+
+    ];
+
+
+    /* ==========================================
+       ELEMENTS
+    ========================================== */
+
+    const startScreen =
+      document.getElementById(
+        "start-screen"
+      );
+
+    const startButton =
+      document.getElementById(
+        "start-button"
+      );
+
+    const errorMessage =
+      document.getElementById(
+        "error-message"
+      );
+
+
+    const cameraPanel =
+      document.getElementById(
+        "camera-panel"
+      );
+
+    const cameraStatus =
+      document.getElementById(
+        "camera-status"
+      );
+
+    const video =
+      document.getElementById(
+        "webcam"
+      );
+
+    const canvas =
+      document.getElementById(
+        "overlay"
+      );
+
+    const ctx =
+      canvas.getContext(
+        "2d"
+      );
+
+
+    const instruction =
+      document.getElementById(
+        "instruction"
+      );
+
+    const instructionTitle =
+      document.getElementById(
+        "instruction-title"
+      );
+
+    const instructionSubtitle =
+      document.getElementById(
+        "instruction-subtitle"
+      );
+
+
+    const baselineStage =
+      document.getElementById(
+        "baseline-stage"
+      );
+
+    const baselineTarget =
+      document.getElementById(
+        "baseline-target"
+      );
+
+    const baselineRing =
+      document.getElementById(
+        "baseline-ring"
+      );
+
+
+    const targetStage =
+      document.getElementById(
+        "target-stage"
+      );
+
+
+    const countdownOverlay =
+      document.getElementById(
+        "countdown-overlay"
+      );
+
+    const countdownMain =
+      document.getElementById(
+        "countdown-main"
+      );
+
+    const countdownSub =
+      document.getElementById(
+        "countdown-sub"
+      );
+
+
+    const debugPanel =
+      document.getElementById(
+        "debug-panel"
+      );
+
+    const faceState =
+      document.getElementById(
+        "face-state"
+      );
+
+    const headState =
+      document.getElementById(
+        "head-state"
+      );
+
+    const horizontalValue =
+      document.getElementById(
+        "horizontal-value"
+      );
+
+    const verticalValue =
+      document.getElementById(
+        "vertical-value"
+      );
+
+    const baselineHValue =
+      document.getElementById(
+        "baseline-h-value"
+      );
+
+    const baselineVValue =
+      document.getElementById(
+        "baseline-v-value"
+      );
+
+    const deltaHValue =
+      document.getElementById(
+        "delta-h-value"
+      );
+
+    const deltaVValue =
+      document.getElementById(
+        "delta-v-value"
+      );
+
+    const zoneState =
+      document.getElementById(
+        "zone-state"
+      );
+
+    const completedValue =
+      document.getElementById(
+        "completed-value"
+      );
+
+    const completeMessage =
+      document.getElementById(
+        "complete-message"
+      );
+
+
+    /* ==========================================
+       TARGET ELEMENT MAPS
+    ========================================== */
+
+    const targetElements = {};
+
+    const ringElements = {};
+
+
+    TARGET_KEYS.forEach(
+      key => {
+
+        targetElements[key] =
+          document.getElementById(
+            key
+          );
+
+        ringElements[key] =
+          document.getElementById(
+            key + "_RING"
+          );
+
+      }
+    );
+
+
+    /* ==========================================
+       STATE
+    ========================================== */
+
+    let faceLandmarker =
+      null;
+
+    let lastVideoTime =
+      -1;
+
+    let lastFrameTime =
+      performance.now();
+
+
+    let stage =
+      "baseline";
+
+
+    let targetInputEnabled =
+      false;
+
+
+    let baselineProgress =
+      0;
+
+    let baselineSamplesH =
+      [];
+
+    let baselineSamplesV =
+      [];
+
+    let baselineH =
+      null;
+
+    let baselineV =
+      null;
+
+
+    let smoothedH =
+      null;
+
+    let smoothedV =
+      null;
+
+
+    let currentZone =
+      "NONE";
+
+    let candidateZone =
+      "NONE";
+
+    let candidateSince =
+      0;
+
+
+    const progress = {};
+
+    const completed = {};
+
+    const lastValidTime = {};
+
+
+    TARGET_KEYS.forEach(
+      key => {
+
+        progress[key] =
+          0;
+
+        completed[key] =
+          false;
+
+        lastValidTime[key] =
+          0;
+
+      }
+    );
+
+
+    /* ==========================================
+       START
+    ========================================== */
+
+    startButton.addEventListener(
+      "click",
+      startTest
+    );
+
+
+    async function startTest() {
+
+      startButton.disabled =
+        true;
+
+      startButton.textContent =
+        "LOADING...";
+
+      errorMessage.style.display =
+        "none";
+
+
+      try {
+
+        const vision =
+          await FilesetResolver
+            .forVisionTasks(
+
+              "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.2/wasm"
+
+            );
+
+
+        faceLandmarker =
+          await FaceLandmarker
+            .createFromOptions(
+
+              vision,
+
+              {
+
+                baseOptions: {
+
+                  modelAssetPath:
+
+                    "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
+
+                },
+
+                runningMode:
+                  "VIDEO",
+
+                numFaces:
+                  1,
+
+                minFaceDetectionConfidence:
+                  0.5,
+
+                minFacePresenceConfidence:
+                  0.5,
+
+                minTrackingConfidence:
+                  0.5
+
+              }
+
+            );
+
+
+        const stream =
+          await navigator.mediaDevices
+            .getUserMedia({
+
+              video: {
+
+                width: {
+                  ideal: 640
+                },
+
+                height: {
+                  ideal: 480
+                },
+
+                facingMode:
+                  "user"
+
+              },
+
+              audio:
+                false
+
+            });
+
+
+        video.srcObject =
+          stream;
+
+
+        await video.play();
+
+
+        await new Promise(
+
+          resolve => {
+
+            if (
+              video.readyState >= 2
+            ) {
+
+              resolve();
+
+            }
+
+            else {
+
+              video.onloadeddata =
+                resolve;
+
+            }
+
+          }
+
+        );
+
+
+        canvas.width =
+          video.videoWidth;
+
+        canvas.height =
+          video.videoHeight;
+
+
+        startScreen.style.display =
+          "none";
+
+        cameraPanel.style.display =
+          "block";
+
+        instruction.style.display =
+          "block";
+
+        baselineStage.style.display =
+          "flex";
+
+        debugPanel.style.display =
+          "block";
+
+
+        cameraStatus.textContent =
+          "Camera ready — tracking iris";
+
+
+        lastFrameTime =
+          performance.now();
+
+
+        requestAnimationFrame(
+          renderLoop
+        );
+
+      }
+
+      catch (error) {
+
+        console.error(
+          error
+        );
+
+        startButton.disabled =
+          false;
+
+        startButton.textContent =
+          "TRY AGAIN";
+
+        errorMessage.style.display =
+          "block";
+
+        errorMessage.textContent =
+          "Could not start MediaPipe or camera.";
+
+      }
+
+    }
+
+
+    /* ==========================================
+       MAIN LOOP
+    ========================================== */
+
+    function renderLoop(
+      now
+    ) {
+
+      if (
+        video.currentTime !==
+        lastVideoTime
+      ) {
+
+        lastVideoTime =
+          video.currentTime;
+
+
+        const result =
+          faceLandmarker.detectForVideo(
+
+            video,
+
+            now
+
+          );
+
+
+        processFace(
+          result,
+          now
+        );
+
+      }
+
+
+      requestAnimationFrame(
+        renderLoop
+      );
+
+    }
+
+
+    /* ==========================================
+       PROCESS FACE
+    ========================================== */
+
+    function processFace(
+      result,
+      now
+    ) {
+
+      const dt =
+        Math.min(
+
+          now -
+          lastFrameTime,
+
+          100
+
+        );
+
+
+      lastFrameTime =
+        now;
+
+
+      ctx.clearRect(
+
+        0,
+        0,
+
+        canvas.width,
+        canvas.height
+
+      );
+
+
+      if (
+
+        !result.faceLandmarks ||
+
+        result.faceLandmarks.length === 0
+
+      ) {
+
+        faceState.textContent =
+          "Face: NOT FOUND";
+
+        faceState.className =
+          "bad";
+
+
+        setZone(
+          "NONE",
+          now
+        );
+
+
+        if (
+          stage === "targets"
+        ) {
+
+          updateTargetProgress(
+            "NONE",
+            dt
+          );
+
+        }
+
+
+        return;
+
+      }
+
+
+      const lm =
+        result.faceLandmarks[0];
+
+
+      faceState.textContent =
+        "Face: detected";
+
+      faceState.className =
+        "good";
+
+
+      const leftIris =
+        lm[468];
+
+      const rightIris =
+        lm[473];
+
+
+      /* ---------- HORIZONTAL ---------- */
+
+      const leftH =
+        normalizedBetween(
+
+          leftIris.x,
+
+          lm[33].x,
+
+          lm[133].x
+
+        );
+
+
+      const rightH =
+        normalizedBetween(
+
+          rightIris.x,
+
+          lm[263].x,
+
+          lm[362].x
+
+        );
+
+
+      const rawH =
+        (
+          leftH +
+          rightH
+        ) / 2;
+
+
+      /* ---------- VERTICAL ---------- */
+
+      const leftV =
+        normalizedBetween(
+
+          leftIris.y,
+
+          lm[159].y,
+
+          lm[145].y
+
+        );
+
+
+      const rightV =
+        normalizedBetween(
+
+          rightIris.y,
+
+          lm[386].y,
+
+          lm[374].y
+
+        );
+
+
+      const rawV =
+        (
+          leftV +
+          rightV
+        ) / 2;
+
+
+      /* ---------- SMOOTH ---------- */
+
+      if (
+        smoothedH === null
+      ) {
+
+        smoothedH =
+          rawH;
+
+        smoothedV =
+          rawV;
+
+      }
+
+      else {
+
+        smoothedH +=
+          (
+            rawH -
+            smoothedH
+          ) *
+          SMOOTHING;
+
+
+        smoothedV +=
+          (
+            rawV -
+            smoothedV
+          ) *
+          SMOOTHING;
+
+      }
+
+
+      /* ---------- EYE OPEN ---------- */
+
+      const leftOpen =
+        eyeOpenness(
+
+          lm[159],
+          lm[145],
+          lm[33],
+          lm[133]
+
+        );
+
+
+      const rightOpen =
+        eyeOpenness(
+
+          lm[386],
+          lm[374],
+          lm[263],
+          lm[362]
+
+        );
+
+
+      const eyesOpen =
+
+        leftOpen >
+        MIN_EYE_OPENNESS
+
+        &&
+
+        rightOpen >
+        MIN_EYE_OPENNESS;
+
+
+      /* ---------- HEAD ---------- */
+
+      const headRatio =
+        normalizedBetween(
+
+          lm[1].x,
+
+          lm[234].x,
+
+          lm[454].x
+
+        );
+
+
+      const headFrontal =
+
+        headRatio >=
+        HEAD_MIN
+
+        &&
+
+        headRatio <=
+        HEAD_MAX;
+
+
+      if (
+        headFrontal
+      ) {
+
+        headState.textContent =
+          "Head: frontal";
+
+        headState.className =
+          "good";
+
+      }
+
+      else {
+
+        headState.textContent =
+          "Head: turn detected";
+
+        headState.className =
+          "bad";
+
+      }
+
+
+      horizontalValue.textContent =
+        smoothedH.toFixed(3);
+
+      verticalValue.textContent =
+        smoothedV.toFixed(3);
+
+
+      if (
+        stage === "baseline"
+      ) {
+
+        processBaseline(
+
+          smoothedH,
+
+          smoothedV,
+
+          headFrontal,
+
+          eyesOpen,
+
+          dt
+
+        );
+
+      }
+
+      else {
+
+        processNineTargets(
+
+          smoothedH,
+
+          smoothedV,
+
+          headFrontal,
+
+          eyesOpen,
+
+          now,
+
+          dt
+
+        );
+
+      }
+
+
+      drawPoint(
+        leftIris,
+        "#00ffff"
+      );
+
+      drawPoint(
+        rightIris,
+        "#00ffff"
+      );
+
+    }
+
+
+    /* ==========================================
+       BASELINE
+    ========================================== */
+
+    function processBaseline(
+      h,
+      v,
+      headFrontal,
+      eyesOpen,
+      dt
+    ) {
+
+      const centerValid =
+
+        h >= 0.39 &&
+        h <= 0.61 &&
+
+        v >= 0.31 &&
+        v <= 0.69 &&
+
+        headFrontal &&
+        eyesOpen;
+
+
+      if (
+        centerValid
+      ) {
+
+        baselineProgress +=
+
+          dt /
+          BASELINE_DWELL_MS;
+
+
+        baselineSamplesH.push(
+          h
+        );
+
+        baselineSamplesV.push(
+          v
+        );
+
+
+        baselineTarget
+          .classList.add(
+            "active"
+          );
+
+      }
+
+      else {
+
+        baselineTarget
+          .classList.remove(
+            "active"
+          );
+
+      }
+
+
+      baselineProgress =
+        clamp(
+
+          baselineProgress,
+
+          0,
+          1
+
+        );
+
+
+      baselineRing.style.strokeDashoffset =
+
+        RING_LENGTH *
+        (
+          1 -
+          baselineProgress
+        );
+
+
+      if (
+        baselineProgress >= 1
+      ) {
+
+        baselineH =
+          average(
+            baselineSamplesH
+          );
+
+        baselineV =
+          average(
+            baselineSamplesV
+          );
+
+
+        baselineHValue.textContent =
+          baselineH.toFixed(3);
+
+        baselineVValue.textContent =
+          baselineV.toFixed(3);
+
+
+        startNineTargetStage();
+
+      }
+
+    }
+
+
+    /* ==========================================
+       READY → 3 → 2 → 1 → GO
+    ========================================== */
+
+    function startNineTargetStage() {
+
+      stage =
+        "targets";
+
+      targetInputEnabled =
+        false;
+
+
+      baselineStage.style.display =
+        "none";
+
+      targetStage.style.display =
+        "grid";
+
+      instruction.style.display =
+        "none";
+
+
+      currentZone =
+        "NONE";
+
+      candidateZone =
+        "NONE";
+
+      candidateSince =
+        performance.now();
+
+
+      countdownOverlay.style.display =
+        "flex";
+
+      countdownMain.textContent =
+        "READY";
+
+      countdownMain.classList.remove(
+        "go"
+      );
+
+      countdownSub.textContent =
+        "3";
+
+
+      setTimeout(
+        function () {
+
+          countdownSub.textContent =
+            "2";
+
+        },
+        1000
+      );
+
+
+      setTimeout(
+        function () {
+
+          countdownSub.textContent =
+            "1";
+
+        },
+        2000
+      );
+
+
+      setTimeout(
+        function () {
+
+          countdownMain.textContent =
+            "GO!";
+
+          countdownMain.classList.add(
+            "go"
+          );
+
+          countdownSub.textContent =
+            "Choose any target";
+
+
+          targetInputEnabled =
+            true;
+
+
+          setTimeout(
+            function () {
+
+              countdownOverlay.style.display =
+                "none";
+
+              instruction.style.display =
+                "block";
+
+              instructionTitle.textContent =
+                "Choose any target";
+
+              instructionSubtitle.textContent =
+                "Hold your gaze continuously for 5 seconds.";
+
+            },
+            750
+          );
+
+        },
+        3000
+      );
+
+    }
+
+
+    /* ==========================================
+       9-TARGET CLASSIFICATION
+    ========================================== */
+
+    function processNineTargets(
+      h,
+      v,
+      headFrontal,
+      eyesOpen,
+      now,
+      dt
+    ) {
+
+      if (
+        !targetInputEnabled
+      ) {
+
+        setZone(
+          "NONE",
+          now
+        );
+
+        return;
+
+      }
+
+
+      const valid =
+
+        headFrontal &&
+        eyesOpen;
+
+
+      if (
+        !valid
+      ) {
+
+        setZone(
+          "NONE",
+          now
+        );
+
+
+        updateTargetProgress(
+          "NONE",
+          dt
+        );
+
+
+        return;
+
+      }
+
+
+      const deltaH =
+        h -
+        baselineH;
+
+
+      const deltaV =
+        v -
+        baselineV;
+
+
+      deltaHValue.textContent =
+        deltaH.toFixed(3);
+
+      deltaVValue.textContent =
+        deltaV.toFixed(3);
+
+
+      /* ---------- HORIZONTAL ---------- */
+
+      let horizontal =
+        "CENTER";
+
+
+      /*
+        Previous prototype confirmed:
+
+        + delta H = user's LEFT
+        - delta H = user's RIGHT
+      */
+
+      if (
+        deltaH >
+        H_THRESHOLD
+      ) {
+
+        horizontal =
+          "LEFT";
+
+      }
+
+      else if (
+        deltaH <
+        -H_THRESHOLD
+      ) {
+
+        horizontal =
+          "RIGHT";
+
+      }
+
+
+      /* ---------- VERTICAL ---------- */
+
+      let vertical =
+        "MID";
+
+
+      /*
+        MediaPipe y grows downward.
+
+        Negative delta V = looking UP
+        Positive delta V = looking DOWN
+      */
+
+      if (
+        deltaV <
+        -V_THRESHOLD
+      ) {
+
+        vertical =
+          "TOP";
+
+      }
+
+      else if (
+        deltaV >
+        V_THRESHOLD
+      ) {
+
+        vertical =
+          "BOTTOM";
+
+      }
+
+
+      /* ---------- BUILD ZONE ---------- */
+
+      let rawZone =
+        "CENTER";
+
+
+      if (
+        vertical === "TOP"
+      ) {
+
+        if (
+          horizontal === "LEFT"
+        ) {
+
+          rawZone =
+            "TOP_LEFT";
+
+        }
+
+        else if (
+          horizontal === "RIGHT"
+        ) {
+
+          rawZone =
+            "TOP_RIGHT";
+
+        }
+
+        else {
+
+          rawZone =
+            "TOP_CENTER";
+
+        }
+
+      }
+
+      else if (
+        vertical === "BOTTOM"
+      ) {
+
+        if (
+          horizontal === "LEFT"
+        ) {
+
+          rawZone =
+            "BOTTOM_LEFT";
+
+        }
+
+        else if (
+          horizontal === "RIGHT"
+        ) {
+
+          rawZone =
+            "BOTTOM_RIGHT";
+
+        }
+
+        else {
+
+          rawZone =
+            "BOTTOM_CENTER";
+
+        }
+
+      }
+
+      else {
+
+        if (
+          horizontal === "LEFT"
+        ) {
+
+          rawZone =
+            "MID_LEFT";
+
+        }
+
+        else if (
+          horizontal === "RIGHT"
+        ) {
+
+          rawZone =
+            "MID_RIGHT";
+
+        }
+
+        else {
+
+          rawZone =
+            "CENTER";
+
+        }
+
+      }
+
+
+      setZone(
+        rawZone,
+        now
+      );
+
+
+      updateTargetProgress(
+        currentZone,
+        dt
+      );
+
+    }
+
+
+    /* ==========================================
+       STABLE ZONE
+    ========================================== */
+
+    function setZone(
+      newZone,
+      now
+    ) {
+
+      if (
+        newZone !==
+        candidateZone
+      ) {
+
+        candidateZone =
+          newZone;
+
+        candidateSince =
+          now;
+
+        return;
+
+      }
+
+
+      if (
+
+        now -
+        candidateSince >=
+        ZONE_STABLE_MS
+
+      ) {
+
+        currentZone =
+          candidateZone;
+
+      }
+
+
+      zoneState.textContent =
+        "Zone: " +
+        currentZone;
+
+
+      if (
+        currentZone === "NONE"
+      ) {
+
+        zoneState.className =
+          "bad";
+
+      }
+
+      else {
+
+        zoneState.className =
+          "good";
+
+      }
+
+    }
+
+
+    /* ==========================================
+       PROGRESS
+    ========================================== */
+
+    function updateTargetProgress(
+      zone,
+      dt
+    ) {
+
+      TARGET_KEYS.forEach(
+        key => {
+
+          targetElements[key]
+            .classList.remove(
+              "active"
+            );
+
+        }
+      );
+
+
+      if (
+        !targetInputEnabled
+      ) {
+
+        return;
+
+      }
+
+
+      const now =
+        performance.now();
+
+
+      /*
+        Only the currently detected target
+        gains progress.
+      */
+
+      if (
+
+        TARGET_KEYS.includes(
+          zone
+        )
+
+        &&
+
+        !completed[zone]
+
+      ) {
+
+        targetElements[zone]
+          .classList.add(
+            "active"
+          );
+
+
+        progress[zone] +=
+
+          dt /
+          TARGET_DWELL_MS;
+
+
+        lastValidTime[zone] =
+          now;
+
+      }
+
+
+      /*
+        User requested:
+
+        gaze can leave target for
+        up to 500ms.
+
+        After that, unfinished
+        progress resets to zero.
+      */
+
+      TARGET_KEYS.forEach(
+        key => {
+
+          if (
+            completed[key]
+          ) {
+
+            return;
+
+          }
+
+
+          if (
+
+            zone !== key &&
+
+            progress[key] > 0 &&
+
+            now -
+            lastValidTime[key] >
+            GAZE_LEAVE_GRACE_MS
+
+          ) {
+
+            progress[key] =
+              0;
+
+          }
+
+        }
+      );
+
+
+      TARGET_KEYS.forEach(
+        key => {
+
+          updateRing(
+            key
+          );
+
+        }
+      );
+
+
+      const completedCount =
+
+        TARGET_KEYS.filter(
+          key =>
+            completed[key]
+        ).length;
+
+
+      completedValue.textContent =
+
+        completedCount +
+        " / 9";
+
+
+      if (
+        completedCount === 9
+      ) {
+
+        completeMessage
+          .classList.add(
+            "show"
+          );
+
+
+        instructionTitle.textContent =
+          "All 9 targets completed";
+
+        instructionSubtitle.textContent =
+          "Nine gaze regions were successfully detected.";
+
+
+        zoneState.textContent =
+          "Zone: ALL COMPLETED ✓";
+
+        zoneState.className =
+          "good";
+
+      }
+
+    }
+
+
+    /* ==========================================
+       RING
+    ========================================== */
+
+    function updateRing(
+      key
+    ) {
+
+      progress[key] =
+        clamp(
+
+          progress[key],
+
+          0,
+          1
+
+        );
+
+
+      ringElements[key]
+        .style
+        .strokeDashoffset =
+
+        RING_LENGTH *
+        (
+          1 -
+          progress[key]
+        );
+
+
+      if (
+
+        progress[key] >= 1
+
+        &&
+
+        !completed[key]
+
+      ) {
+
+        completed[key] =
+          true;
+
+
+        targetElements[key]
+          .classList.remove(
+            "active"
+          );
+
+
+        targetElements[key]
+          .classList.add(
+            "completed"
+          );
+
+      }
+
+    }
+
+
+    /* ==========================================
+       HELPERS
+    ========================================== */
+
+    function normalizedBetween(
+      value,
+      a,
+      b
+    ) {
+
+      const min =
+        Math.min(
+          a,
+          b
+        );
+
+
+      const max =
+        Math.max(
+          a,
+          b
+        );
+
+
+      const range =
+        max -
+        min;
+
+
+      if (
+        range <
+        0.00001
+      ) {
+
+        return 0.5;
+
+      }
+
+
+      return (
+        value -
+        min
+      ) /
+      range;
+
+    }
+
+
+    function eyeOpenness(
+      top,
+      bottom,
+      cornerA,
+      cornerB
+    ) {
+
+      const vertical =
+        Math.abs(
+          top.y -
+          bottom.y
+        );
+
+
+      const horizontal =
+        Math.abs(
+          cornerA.x -
+          cornerB.x
+        );
+
+
+      if (
+        horizontal <
+        0.00001
+      ) {
+
+        return 0;
+
+      }
+
+
+      return (
+        vertical /
+        horizontal
+      );
+
+    }
+
+
+    function drawPoint(
+      landmark,
+      color
+    ) {
+
+      const x =
+        landmark.x *
+        canvas.width;
+
+
+      const y =
+        landmark.y *
+        canvas.height;
+
+
+      ctx.beginPath();
+
+
+      ctx.arc(
+
+        x,
+        y,
+
+        5,
+
+        0,
+
+        Math.PI * 2
+
+      );
+
+
+      ctx.fillStyle =
+        color;
+
+
+      ctx.fill();
+
+    }
+
+
+    function average(
+      values
+    ) {
+
+      if (
+        values.length === 0
+      ) {
+
+        return 0.5;
+
+      }
+
+
+      return (
+
+        values.reduce(
+
+          (
+            sum,
+            value
+          ) =>
+            sum +
+            value,
+
+          0
+
+        )
+
+        /
+
+        values.length
+
+      );
+
+    }
+
+
+    function clamp(
+      value,
+      min,
+      max
+    ) {
+
+      return Math.max(
+
+        min,
+
+        Math.min(
+          max,
+          value
+        )
+
+      );
+
+    }
+
+  </script>
+
+</body>
+
+</html>
