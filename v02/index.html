@@ -71,6 +71,11 @@
   display: none;
 }
 
+#calibrationControls {
+  margin-top: 24px;
+  margin-bottom: 16px;
+}
+
   </style>
 </head>
 
@@ -95,6 +100,12 @@
 
   <button id="sampleBottom" type="button" disabled>
     Sample BOTTOM
+  </button>
+</div>
+
+<div id="calibrationControls">
+  <button id="startCalibration" type="button" disabled>
+    Start 9-Point Calibration
   </button>
 </div>
 
@@ -132,6 +143,9 @@ const samplingStatus =
 const gazeTarget =
   document.getElementById("gazeTarget");
 
+const startCalibrationButton =
+  document.getElementById("startCalibration");
+
     let faceLandmarker;
     let lastVideoTime = -1;
 
@@ -142,6 +156,24 @@ let samplingFrames = [];
 const SAMPLE_DURATION_MS = 2000;
 
 const PREPARE_DURATION_MS = 2000;
+
+const calibrationPoints = [
+  { id: "TOP_LEFT", x: 15, y: 15 },
+  { id: "TOP_CENTER", x: 50, y: 15 },
+  { id: "TOP_RIGHT", x: 85, y: 15 },
+
+  { id: "MIDDLE_LEFT", x: 15, y: 50 },
+  { id: "MIDDLE_CENTER", x: 50, y: 50 },
+  { id: "MIDDLE_RIGHT", x: 85, y: 50 },
+
+  { id: "BOTTOM_LEFT", x: 15, y: 85 },
+  { id: "BOTTOM_CENTER", x: 50, y: 85 },
+  { id: "BOTTOM_RIGHT", x: 85, y: 85 }
+];
+
+let calibrationActive = false;
+let calibrationIndex = 0;
+let calibrationResults = [];
 
 let audioContext = null;
 let samplingStarted = false;
@@ -190,6 +222,46 @@ sampleCenterButton.addEventListener("click", () => {
 sampleBottomButton.addEventListener("click", () => {
   startSampling("BOTTOM");
 });
+
+
+
+startCalibrationButton.addEventListener("click", () => {
+  if (!calibrationActive) {
+    calibrationActive = true;
+    calibrationIndex = 0;
+    calibrationResults = [];
+  } else {
+    calibrationIndex++;
+  }
+
+  if (calibrationIndex >= calibrationPoints.length) {
+    calibrationActive = false;
+    calibrationIndex = 0;
+    gazeTarget.hidden = true;
+
+    startCalibrationButton.textContent =
+      "Start 9-Point Calibration";
+
+    samplingStatus.textContent =
+      "9-point preview finished";
+
+    return;
+  }
+
+  const point = calibrationPoints[calibrationIndex];
+
+  gazeTarget.style.left = point.x + "%";
+  gazeTarget.style.top = point.y + "%";
+  gazeTarget.hidden = false;
+
+  startCalibrationButton.textContent = "Next Point";
+
+  samplingStatus.textContent =
+    "Calibration point " + (calibrationIndex + 1) +
+    "/9: " + point.id + " — preview only";
+});
+
+
 
 
 function startSampling(target) {
@@ -258,6 +330,8 @@ playBeep(550, 1);
 sampleTopButton.disabled = false;
 sampleCenterButton.disabled = false;
 sampleBottomButton.disabled = false;
+
+startCalibrationButton.disabled = false;
 
 samplingStatus.textContent = "Ready to sample";
 
