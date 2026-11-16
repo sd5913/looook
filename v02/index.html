@@ -48,6 +48,29 @@
       padding: 20px;
       border-radius: 12px;
     }
+
+#gazeTarget {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+
+  background: #00d99a;
+  border: 4px solid white;
+  box-shadow: 0 0 20px rgba(0, 217, 154, 0.6);
+
+  z-index: 1000;
+  pointer-events: none;
+}
+
+#gazeTarget[hidden] {
+  display: none;
+}
+
   </style>
 </head>
 
@@ -77,6 +100,8 @@
 
 <p id="samplingStatus">Sampling not started</p>
 
+<div id="gazeTarget" hidden aria-hidden="true"></div>
+
   <video id="webcam" autoplay muted playsinline></video>
 
   <pre id="debug">Waiting for eye data...</pre>
@@ -104,6 +129,9 @@ const sampleBottomButton =
 const samplingStatus =
   document.getElementById("samplingStatus");
 
+const gazeTarget =
+  document.getElementById("gazeTarget");
+
     let faceLandmarker;
     let lastVideoTime = -1;
 
@@ -112,6 +140,42 @@ let samplingStartTime = 0;
 let samplingFrames = [];
 
 const SAMPLE_DURATION_MS = 2000;
+
+const PREPARE_DURATION_MS = 2000;
+
+let audioContext = null;
+let samplingStarted = false;
+
+function playBeep(frequency, count = 1) {
+  if (!audioContext) {
+    audioContext = new AudioContext();
+  }
+
+  audioContext.resume();
+
+  for (let i = 0; i < count; i++) {
+    const startTime =
+      audioContext.currentTime + i * 0.22;
+
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+
+    oscillator.frequency.value = frequency;
+    oscillator.type = "sine";
+
+    gain.gain.setValueAtTime(0.08, startTime);
+    gain.gain.exponentialRampToValueAtTime(
+      0.001,
+      startTime + 0.12
+    );
+
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+
+    oscillator.start(startTime);
+    oscillator.stop(startTime + 0.12);
+  }
+}
 
     button.addEventListener("click", startCamera);
 
@@ -127,14 +191,37 @@ sampleBottomButton.addEventListener("click", () => {
   startSampling("BOTTOM");
 });
 
+
 function startSampling(target) {
   samplingTarget = target;
-  samplingStartTime = performance.now();
+
+  samplingStartTime =
+    performance.now() + PREPARE_DURATION_MS;
+
   samplingFrames = [];
 
+
+const targetPositions = {
+  TOP: "15%",
+  CENTER: "50%",
+  BOTTOM: "85%"
+};
+
+gazeTarget.style.top = targetPositions[target];
+gazeTarget.style.left = "50%";
+gazeTarget.hidden = false;
+
+
+sampleTopButton.disabled = true;
+sampleCenterButton.disabled = true;
+sampleBottomButton.disabled = true;
+
+samplingStarted = false;
+playBeep(550, 1);
   samplingStatus.textContent =
-    "Selected " + target + " — capture not connected yet";
+    "Preparing " + target + " — look at the target";
 }
+
 
     async function startCamera() {
       button.disabled = true;
@@ -278,8 +365,19 @@ const rightCornerRelativeY =
 if (samplingTarget !== null) {
   const elapsed = performance.now() - samplingStartTime;
 
-  if (elapsed < SAMPLE_DURATION_MS) {
+  
+if (elapsed < 0) {
+  const secondsLeft = Math.ceil(-elapsed / 1000);
 
+  samplingStatus.textContent =
+    "Preparing " + samplingTarget +
+    ": " + secondsLeft + "s";
+
+} else if (elapsed < SAMPLE_DURATION_MS) {
+if (!samplingStarted) {
+  samplingStarted = true;
+  playBeep(1000, 2);
+}
     if (
       leftRelativeY !== null &&
       rightRelativeY !== null
@@ -300,6 +398,8 @@ if (samplingTarget !== null) {
 
   
 } else {
+  playBeep(700, 3);
+
   const count = samplingFrames.length;
 
   if (count === 0) {
@@ -346,6 +446,14 @@ samplingStatus.textContent =
   }
 
   samplingTarget = null;
+
+gazeTarget.hidden = true;
+
+
+sampleTopButton.disabled = false;
+sampleCenterButton.disabled = false;
+sampleBottomButton.disabled = false;
+
 }
 
 }
