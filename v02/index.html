@@ -61,6 +61,22 @@
 
   <p id="status">Camera not started</p>
 
+<div id="samplingControls">
+  <button id="sampleTop" type="button" disabled>
+    Sample TOP
+  </button>
+
+  <button id="sampleCenter" type="button" disabled>
+    Sample CENTER
+  </button>
+
+  <button id="sampleBottom" type="button" disabled>
+    Sample BOTTOM
+  </button>
+</div>
+
+<p id="samplingStatus">Sampling not started</p>
+
   <video id="webcam" autoplay muted playsinline></video>
 
   <pre id="debug">Waiting for eye data...</pre>
@@ -76,10 +92,49 @@
     const debug = document.getElementById("debug");
     const button = document.getElementById("startButton");
 
+const sampleTopButton =
+  document.getElementById("sampleTop");
+
+const sampleCenterButton =
+  document.getElementById("sampleCenter");
+
+const sampleBottomButton =
+  document.getElementById("sampleBottom");
+
+const samplingStatus =
+  document.getElementById("samplingStatus");
+
     let faceLandmarker;
     let lastVideoTime = -1;
 
+let samplingTarget = null;
+let samplingStartTime = 0;
+let samplingFrames = [];
+
+const SAMPLE_DURATION_MS = 2000;
+
     button.addEventListener("click", startCamera);
+
+sampleTopButton.addEventListener("click", () => {
+  startSampling("TOP");
+});
+
+sampleCenterButton.addEventListener("click", () => {
+  startSampling("CENTER");
+});
+
+sampleBottomButton.addEventListener("click", () => {
+  startSampling("BOTTOM");
+});
+
+function startSampling(target) {
+  samplingTarget = target;
+  samplingStartTime = performance.now();
+  samplingFrames = [];
+
+  samplingStatus.textContent =
+    "Selected " + target + " — capture not connected yet";
+}
 
     async function startCamera() {
       button.disabled = true;
@@ -111,8 +166,15 @@
         video.srcObject = stream;
         await video.play();
 
-        status.textContent = "Camera ready";
-        requestAnimationFrame(trackEyes);
+       status.textContent = "Camera ready";
+
+sampleTopButton.disabled = false;
+sampleCenterButton.disabled = false;
+sampleBottomButton.disabled = false;
+
+samplingStatus.textContent = "Ready to sample";
+
+requestAnimationFrame(trackEyes);
 
       } catch (error) {
         console.error(error);
@@ -212,7 +274,82 @@ const rightCornerRelativeY =
   (rightIris.y - rightEyeCornerY) /
   Math.max(rightEyeWidth, 0.0001);
 
-          
+      
+if (samplingTarget !== null) {
+  const elapsed = performance.now() - samplingStartTime;
+
+  if (elapsed < SAMPLE_DURATION_MS) {
+
+    if (
+      leftRelativeY !== null &&
+      rightRelativeY !== null
+    ) {
+      samplingFrames.push({
+        leftRelativeX,
+        rightRelativeX,
+        leftRelativeY,
+        rightRelativeY,
+        leftCornerRelativeY,
+        rightCornerRelativeY
+      });
+    }
+
+    samplingStatus.textContent =
+      "Sampling " + samplingTarget +
+      ": " + samplingFrames.length + " valid frames";
+
+  
+} else {
+  const count = samplingFrames.length;
+
+  if (count === 0) {
+    samplingStatus.textContent =
+      "Finished " + samplingTarget + ": no valid frames";
+  } else {
+    const leftMean =
+      samplingFrames.reduce(
+        (sum, frame) => sum + frame.leftCornerRelativeY,
+        0
+      ) / count;
+
+    const rightMean =
+      samplingFrames.reduce(
+        (sum, frame) => sum + frame.rightCornerRelativeY,
+        0
+      ) / count;
+
+const leftStd = Math.sqrt(
+  samplingFrames.reduce(
+    (sum, frame) =>
+      sum + Math.pow(frame.leftCornerRelativeY - leftMean, 2),
+    0
+  ) / count
+);
+
+const rightStd = Math.sqrt(
+  samplingFrames.reduce(
+    (sum, frame) =>
+      sum + Math.pow(frame.rightCornerRelativeY - rightMean, 2),
+    0
+  ) / count
+);
+
+    
+samplingStatus.textContent =
+  "Finished " + samplingTarget +
+  ": " + count + " valid frames" +
+  " | Left Corner Y mean: " + leftMean.toFixed(4) +
+  " | Right Corner Y mean: " + rightMean.toFixed(4) +
+  " | Left Corner Y std: " + leftStd.toFixed(4) +
+  " | Right Corner Y std: " + rightStd.toFixed(4);
+
+  }
+
+  samplingTarget = null;
+}
+
+}
+    
 debug.textContent =
   "Landmarks: " + landmarks.length + "\n" +
   "\n" +
