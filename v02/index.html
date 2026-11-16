@@ -169,6 +169,49 @@ const rightRelativeX =
 
           status.textContent = "Eyes detected";
 
+const leftTopY = landmarks[159].y;
+const leftBottomY = landmarks[145].y;
+
+const rightTopY = landmarks[386].y;
+const rightBottomY = landmarks[374].y;
+
+const leftEyeHeight = Math.abs(leftBottomY - leftTopY);
+const rightEyeHeight = Math.abs(rightBottomY - rightTopY);
+
+const leftRelativeY =
+  leftEyeHeight > 0.005
+    ? (leftIris.y - Math.min(leftTopY, leftBottomY)) / leftEyeHeight
+    : null;
+
+const rightRelativeY =
+  rightEyeHeight > 0.005
+    ? (rightIris.y - Math.min(rightTopY, rightBottomY)) / rightEyeHeight
+    : null;
+
+const leftEyeCornerY =
+  (landmarks[33].y + landmarks[133].y) / 2;
+
+const rightEyeCornerY =
+  (landmarks[362].y + landmarks[263].y) / 2;
+
+const leftEyeWidth = Math.hypot(
+  landmarks[33].x - landmarks[133].x,
+  landmarks[33].y - landmarks[133].y
+);
+
+const rightEyeWidth = Math.hypot(
+  landmarks[362].x - landmarks[263].x,
+  landmarks[362].y - landmarks[263].y
+);
+
+const leftCornerRelativeY =
+  (leftIris.y - leftEyeCornerY) /
+  Math.max(leftEyeWidth, 0.0001);
+
+const rightCornerRelativeY =
+  (rightIris.y - rightEyeCornerY) /
+  Math.max(rightEyeWidth, 0.0001);
+
           
 debug.textContent =
   "Landmarks: " + landmarks.length + "\n" +
@@ -180,8 +223,18 @@ debug.textContent =
   "Right Iris Y: " + rightIris.y.toFixed(4) + "\n" +
   "\n" +
   "--- Relative Eye Position ---\n" +
-  "Left Relative X: " + leftRelativeX.toFixed(4) + "\n" +
-  "Right Relative X: " + rightRelativeX.toFixed(4);
+ 
+"Left Relative X: " + leftRelativeX.toFixed(4) + "\n" +
+"Right Relative X: " + rightRelativeX.toFixed(4) + "\n" +
+"Left Relative Y: " +
+  (leftRelativeY === null ? "INVALID" : leftRelativeY.toFixed(4)) + "\n" +
+
+"Right Relative Y: " +
+  (rightRelativeY === null ? "INVALID" : rightRelativeY.toFixed(4)) + "\n" +
+"\n" +
+"--- Eye Corner Relative Y ---\n" +
+"Left Corner Relative Y: " + leftCornerRelativeY.toFixed(4) + "\n" +
+"Right Corner Relative Y: " + rightCornerRelativeY.toFixed(4);
 
 
         } else {
